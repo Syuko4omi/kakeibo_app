@@ -1,23 +1,25 @@
 {% extends "base.html" %}
 {% block content %}
-<table class="table">
-    <thead>
-        <tr>
-            <th scope="col">#</th>
-            <th scope="col">サービス</th>
-            <th scope="col">上限金額</th>
-            <th scope="col">編集</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for service in service_settings %}
-        <tr>
-            <th scope="row">1</th>
-            <td>{{service.service_name}}</td>
-            <td>{{service.upper_limit}}</td>
-            <td>🔧</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="container">
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">サービス</th>
+                <th scope="col">上限金額</th>
+                <th scope="col">編集</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for service in service_detail_list %}
+            <tr>
+                <th scope="row">1</th>
+                <td>{{service.service_name}}</td>
+                <td>{{service.upper_limit}}</td>
+                <td>🔧</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
