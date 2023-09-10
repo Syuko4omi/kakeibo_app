@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<nav class="navbar navbar-light bg-light">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">新規サービス登録</span>
+    </div>
+</nav>
+
+<div class="container">
+    <form method="POST">
+        <div class="mb-3">
+            <label for="service_name" class="form-label">サービス名</label>
+            <input type="text" class="form-control" id="service_name" aria-describedby="emailHelp" placeholder="Amazon">
+        </div>
+        <div class="mb-3">
+            <label for="service_url" class="form-label">サービスのリンク</label>
+            <input type="url" class="form-control" id="service_url" placeholder="https://www.amazon.co.jp">
+        </div>
+        <button type="submit" class="btn btn-primary">登録</button>
+    </form>
+</div>
+{% endblock %}

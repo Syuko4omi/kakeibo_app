@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
+<nav class="navbar navbar-light bg-light">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">サービス一覧</span>
+    </div>
+</nav>
+
 <div class="container">
     <table class="table table-striped">
         <thead>
@@ -8,15 +14,17 @@
                 <th scope="col">サービス</th>
                 <th scope="col">上限金額</th>
                 <th scope="col">編集</th>
+                <th scope="col">削除</th>
             </tr>
         </thead>
         <tbody>
             {% for service in service_detail_list %}
             <tr>
-                <th scope="row">1</th>
+                <th scope="row">{{service.service_id}}</th>
                 <td>{{service.service_name}}</td>
                 <td>{{service.upper_limit}}</td>
-                <td>🔧</td>
+                <td><a href="/{{service.service_id}}/service_edit" role="button">✏️</a></td>
+                <td><a href="/{{service.service_id}}/service_delete" role="button">🗑️</a></td>
             </tr>
             {% endfor %}
         </tbody>
@@ -25,6 +33,8 @@
 
 
 <div class="container">
-    <button type="button" class="btn btn-success">➕サービス追加</button>
+    <a href="/service_register">
+        <button type="button" class="btn btn-success">➕新規サービス登録</button>
+    </a>
 </div>
 {% endblock %}
