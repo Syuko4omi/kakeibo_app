@@ -35,38 +35,6 @@ def top():  # トップ画面を表示
         "select * from service"
     ).fetchall()  # これがsqlite3.Rowオブジェクトが入ったリストになっている
 
-    """
-    service_detail_list = [
-        {
-            "service_id": 1,
-            "service_name": "service_1",
-            "current_usage": 4000,
-            "upper_limit": 12000,
-            "usage_ratio": 33.3,
-            "text_style_usage_ratio": "width:33.3%",
-            "usage_ratio_with_percent": "33.3%",
-        },
-        {
-            "service_id": 2,
-            "service_name": "service_2",
-            "current_usage": 9000,
-            "upper_limit": 10000,
-            "usage_ratio": 90.0,
-            "text_style_usage_ratio": "width:90.0%",
-            "usage_ratio_with_percent": "90.0%",
-        },
-        {
-            "service_id": 3,
-            "service_name": "service_3",
-            "current_usage": 10000,
-            "upper_limit": 5000,
-            "usage_ratio": 200.0,
-            "text_style_usage_ratio": "width:200.0%",
-            "usage_ratio_with_percent": "200.0%",
-        },
-    ]
-    """
-
     if service_detail_list != []:
         total_current_usage = sum(
             [service_detail["current_usage"] for service_detail in service_detail_list]
@@ -94,7 +62,7 @@ def top():  # トップ画面を表示
             year=dt.year,
             month=dt.month,
             total_current_usage=0,
-            total_upper_limit=0.1,  # ここ0だとdivision by zeroが出る
+            total_upper_limit=0,
             text_style_total_usage_ratio="width:0%",
             total_usage_ratio_with_percent="-",
             service_detail_list=service_detail_list,
@@ -107,35 +75,6 @@ def show_registered_services():  # 登録したサービスの一覧を表示
     service_detail_list = db.execute(
         "select * from service"
     ).fetchall()  # これがsqlite3.Rowオブジェクトが入ったリストになっている
-    """service_detail_list = [
-        {
-            "service_id": 1,
-            "service_name": "service_1",
-            "current_usage": 4000,
-            "upper_limit": 12000,
-            "usage_ratio": 33.3,
-            "text_style_usage_ratio": "width:33.3%",
-            "usage_ratio_with_percent": "33.3%",
-        },
-        {
-            "service_id": 2,
-            "service_name": "service_2",
-            "current_usage": 9000,
-            "upper_limit": 10000,
-            "usage_ratio": 90.0,
-            "text_style_usage_ratio": "width:90.0%",
-            "usage_ratio_with_percent": "90.0%",
-        },
-        {
-            "service_id": 3,
-            "service_name": "service_3",
-            "current_usage": 10000,
-            "upper_limit": 5000,
-            "usage_ratio": 200.0,
-            "text_style_usage_ratio": "width:200.0%",
-            "usage_ratio_with_percent": "200.0%",
-        },
-    ]"""
     return render_template(
         "service_detail.html", service_detail_list=service_detail_list
     )
@@ -144,9 +83,26 @@ def show_registered_services():  # 登録したサービスの一覧を表示
 @app.route("/service_register", methods=["GET", "POST"])
 def register_new_service():
     if request.method == "POST":
+        # request.form.getで得られるのは全部str型
         service_name = request.form.get("service_name")  # 画面から送られてきたサービス名
         upper_limit = request.form.get("upper_limit")  # 画面から送られてきたサービスの使用上限金額
-        print(service_name, upper_limit)
+        db = get_db()
+        is_existed_service = db.execute(
+            "select service_name from service where service_name = ?",
+            [
+                service_name,
+            ],
+        ).fetchall()
+
+        if is_existed_service:
+            return render_template(
+                "service_register.html", error_message="同じ名前のサービスが既に存在しています"
+            )
+        if service_name == "" or upper_limit == "":
+            return render_template(
+                "service_register.html", error_message="サービス名もしくは使用上限金額が空欄です"
+            )
+
         register_body = {
             "service_name": service_name,
             "current_usage": 0,
@@ -155,7 +111,6 @@ def register_new_service():
             "text_style_usage_ratio": "width:0.0%",
             "usage_ratio_with_percent": "0.0%",
         }
-        db = get_db()
         statement = "".join(
             [
                 "insert into service (",
@@ -169,24 +124,38 @@ def register_new_service():
         db.execute(statement, [value for value in register_body.values()])
         db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
         return redirect("/service_detail")  # DBに新たなメモを入れたら、TOP画面に戻る
-    return render_template("service_register.html")
+    return render_template("service_register.html", error_message="")
 
 
 @app.route("/<service_id>/service_edit", methods=["GET", "POST"])
 def edit_service(service_id):
-    service_name = "hoge"
-    service_url = "https://getbootstrap.jp/docs/5.0/components/modal/"
     if request.method == "POST":
-        """service_name = request.form.get("service_name")  # 画面から送られてきたメモのタイトル
-        service_url = request.form.get("service_url")  # 画面から送られてきたメモの中身
+        service_name = request.form.get("service_name")  # 画面から送られてきたサービス名
+        upper_limit = request.form.get("upper_limit")  # 画面から送られてきたサービスの使用上限金額
         db = get_db()
-        db.execute("insert into memo (title, body) values (?,?)", [title, body])
-        db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
-        """
+        register_body = {
+            "service_name": service_name,
+            "current_usage": 0,
+            "upper_limit": upper_limit,
+            "usage_ratio": 0.0,
+            "text_style_usage_ratio": "width:0.0%",
+            "usage_ratio_with_percent": "0.0%",
+        }
+        db = get_db()
+        db.execute(
+            "update service set upper_limit = ? where service_name = ?",
+            [upper_limit, service_name],
+        )
+        db.commit()
         return redirect("/service_detail")  # DBに新たなメモを入れたら、TOP画面に戻る
-    return render_template(
-        "service_edit.html", service_name=service_name, service_url=service_url
-    )
+    db = get_db()
+    post = db.execute(
+        "select service_name, upper_limit from service where service_id = ?",
+        [
+            service_id,
+        ],
+    ).fetchone()
+    return render_template("service_edit.html", post=post)
 
 
 @app.route("/<service_id>/service_delete", methods=["GET", "POST"])

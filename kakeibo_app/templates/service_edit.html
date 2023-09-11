@@ -10,12 +10,12 @@
     <form method="POST">
         <div class="mb-3">
             <label for="service_name" class="form-label">サービス名</label>
-            <input type="text" class="form-control" id="service_name" aria-describedby="emailHelp"
-                value="{{service_name}}">
+            <input type="text" class="form-control" name="service_name" id="service_name" aria-describedby="emailHelp"
+                value="{{post.service_name}}">
         </div>
         <div class="mb-3">
-            <label for="service_url" class="form-label">サービスのリンク</label>
-            <input type="url" class="form-control" id="service_url" , value="{{service_url}}">
+            <label for="upper_limit" class="form-label">使用上限金額</label>
+            <input type="number" class="form-control" name="upper_limit" id="upper_limit" value="{{post.upper_limit}}">
         </div>
 
         <button type="button" class="btn btn-primary mb-12" data-toggle="modal" data-target="#testModal">編集完了</button>

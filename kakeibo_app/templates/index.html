@@ -4,6 +4,7 @@
     <div class="container text-white">
         <h1>{{year}}年{{month}}月</h1>
         <p>{{total_current_usage}}円/{{total_upper_limit}}円</p>
+        {% if total_upper_limit != 0 %}
         {% if total_current_usage / total_upper_limit < 0.8 %} <div class="progress" style="height: 30px;">
             <div class="progress-bar bg-success" style={{text_style_total_usage_ratio}} role="progressbar">
                 {{total_usage_ratio_with_percent}}🤑</div>
@@ -17,6 +18,7 @@
     <div class="progress-bar bg-danger" style={{text_style_total_usage_ratio}} role="progressbar">
         {{total_usage_ratio_with_percent}}💸</div>
 </div>
+{% endif %}
 {% endif %}
 </div>
 </div>
