@@ -94,7 +94,7 @@ def register_new_service():
             ],
         ).fetchall()
 
-        # 同名のサービスがある場合・入力が不正な場合のエラーキャッチ
+        # 同名のサービスがある場合・入力が空欄の場合のエラーキャッチ
         if is_existed_service:
             return render_template(
                 "service_register.html", error_message="同じ名前のサービスが既に存在しています"
@@ -129,20 +129,26 @@ def register_new_service():
     return render_template("service_register.html", error_message="")
 
 
-@app.route("/<service_id>/service_edit", methods=["GET", "POST"])
-def edit_service(service_id):
+@app.route("/<service_name>/service_edit", methods=["GET", "POST"])
+def edit_service(service_name):
     if request.method == "POST":
         service_name = request.form.get("service_name")  # 画面から送られてきたサービス名
         upper_limit = request.form.get("upper_limit")  # 画面から送られてきたサービスの使用上限金額
-        db = get_db()
-        register_body = {
-            "service_name": service_name,
-            "current_usage": 0,
-            "upper_limit": upper_limit,
-            "usage_ratio": 0.0,
-            "text_style_usage_ratio": "width:0.0%",
-            "usage_ratio_with_percent": "0.0%",
-        }
+
+        # 入力が空欄の場合のエラーキャッチ
+        if upper_limit == "":
+            db = get_db()
+            post = db.execute(
+                "select service_name, upper_limit from service where service_name = ?",
+                [
+                    service_name,
+                ],
+            ).fetchone()
+            return render_template(
+                "service_edit.html", error_message="使用上限金額が空欄です", post=post
+            )
+
+        # DBに上書き登録する処理
         db = get_db()
         db.execute(
             "update service set upper_limit = ? where service_name = ?",
@@ -152,29 +158,36 @@ def edit_service(service_id):
         return redirect("/service_detail")  # DBに新たなメモを入れたら、TOP画面に戻る
     db = get_db()
     post = db.execute(
-        "select service_name, upper_limit from service where service_id = ?",
+        "select service_name, upper_limit from service where service_name = ?",
         [
-            service_id,
+            service_name,
         ],
     ).fetchone()
-    return render_template("service_edit.html", post=post)
+    return render_template("service_edit.html", error_message="", post=post)
 
 
-@app.route("/<service_id>/service_delete", methods=["GET", "POST"])
-def delete_service(service_id):
-    service_name = "hoge"
-    service_url = "https://getbootstrap.jp/docs/5.0/components/modal/"
+@app.route("/<service_name>/service_delete", methods=["GET", "POST"])
+def delete_service(service_name):
     if request.method == "POST":
-        """service_name = request.form.get("service_name")  # 画面から送られてきたメモのタイトル
-        service_url = request.form.get("service_url")  # 画面から送られてきたメモの中身
+        service_name = request.form.get("service_name")  # 画面から送られてきたメモのタイトル
         db = get_db()
-        db.execute("insert into memo (title, body) values (?,?)", [title, body])
+        print(service_name)
+        db.execute(
+            "delete from service where service_name = ?",
+            [
+                service_name,
+            ],
+        )
         db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
-        """
         return redirect("/service_detail")  # DBに新たなメモを入れたら、TOP画面に戻る
-    return render_template(
-        "service_delete.html", service_name=service_name, service_url=service_url
-    )
+    db = get_db()
+    post = db.execute(
+        "select service_name, upper_limit from service where service_name = ?",
+        [
+            service_name,
+        ],
+    ).fetchone()
+    return render_template("service_delete.html", post=post)
 
 
 app.run()

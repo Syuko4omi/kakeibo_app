@@ -10,7 +10,6 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <th scope="col">#</th>
                 <th scope="col">サービス</th>
                 <th scope="col">上限金額</th>
                 <th scope="col">上限金額変更</th>
@@ -20,11 +19,10 @@
         <tbody>
             {% for service in service_detail_list %}
             <tr>
-                <th scope="row">{{service.service_id}}</th>
                 <td>{{service.service_name}}</td>
                 <td>{{service.upper_limit}}</td>
-                <td><a href="/{{service.service_id}}/service_edit" role="button">✏️</a></td>
-                <td><a href="/{{service.service_id}}/service_delete" role="button">🗑️</a></td>
+                <td><a href="/{{service.service_name}}/service_edit" role="button">✏️</a></td>
+                <td><a href="/{{service.service_name}}/service_delete" role="button">🗑️</a></td>
             </tr>
             {% endfor %}
         </tbody>
