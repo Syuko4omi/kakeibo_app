@@ -10,11 +10,12 @@
     <form method="POST">
         <div class="mb-3">
             <label for="service_name" class="form-label">サービス名</label>
-            <input type="text" class="form-control" id="service_name" aria-describedby="emailHelp" placeholder="Amazon">
+            <input type="text" class="form-control" name="service_name" id="service_name" aria-describedby="emailHelp"
+                placeholder="Amazon">
         </div>
         <div class="mb-3">
-            <label for="service_url" class="form-label">サービスのリンク</label>
-            <input type="url" class="form-control" id="service_url" placeholder="https://www.amazon.co.jp">
+            <label for="upper_limit" class="form-label">使用上限金額</label>
+            <input type="number" name="upper_limit" class="form-control" id="upper_limit" placeholder="5000">
         </div>
 
         <button type="submit" class="btn btn-primary">登録</button>

@@ -142,14 +142,32 @@ def show_registered_services():  # 登録したサービスの一覧を表示
 
 
 @app.route("/service_register", methods=["GET", "POST"])
-def regist_new_service():
+def register_new_service():
     if request.method == "POST":
-        """service_name = request.form.get("service_name")  # 画面から送られてきたメモのタイトル
-        service_url = request.form.get("service_url")  # 画面から送られてきたメモの中身
+        service_name = request.form.get("service_name")  # 画面から送られてきたサービス名
+        upper_limit = request.form.get("upper_limit")  # 画面から送られてきたサービスの使用上限金額
+        print(service_name, upper_limit)
+        register_body = {
+            "service_name": service_name,
+            "current_usage": 0,
+            "upper_limit": upper_limit,
+            "usage_ratio": 0.0,
+            "text_style_usage_ratio": "width:0.0%",
+            "usage_ratio_with_percent": "0.0%",
+        }
         db = get_db()
-        db.execute("insert into memo (title, body) values (?,?)", [title, body])
+        statement = "".join(
+            [
+                "insert into service (",
+                ", ".join("`" + key + "`" for key in register_body.keys()),
+                ") values (",
+                ", ".join(["?"] * len(register_body)),
+                ")",
+            ]
+        )
+        # db.execute("insert into memo (title, body) values (?,?)", [service_name, body])みたいな
+        db.execute(statement, [value for value in register_body.values()])
         db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
-        """
         return redirect("/service_detail")  # DBに新たなメモを入れたら、TOP画面に戻る
     return render_template("service_register.html")
 
