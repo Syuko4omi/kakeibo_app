@@ -2,7 +2,7 @@
 {% block content %}
 <nav class="navbar navbar-light bg-light">
     <div class="container-fluid">
-        <span class="navbar-brand mb-0 h1">サービス編集</span>
+        <span class="navbar-brand mb-0 h1">上限金額変更</span>
     </div>
 </nav>
 
@@ -11,7 +11,7 @@
         <div class="mb-3">
             <label for="service_name" class="form-label">サービス名</label>
             <input type="text" class="form-control" name="service_name" id="service_name" aria-describedby="emailHelp"
-                value="{{post.service_name}}">
+                value="{{post.service_name}}" disabled>
         </div>
         <div class="mb-3">
             <label for="upper_limit" class="form-label">使用上限金額</label>

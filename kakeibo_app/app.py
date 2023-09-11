@@ -82,18 +82,19 @@ def show_registered_services():  # 登録したサービスの一覧を表示
 
 @app.route("/service_register", methods=["GET", "POST"])
 def register_new_service():
-    if request.method == "POST":
+    if request.method == "POST":  # 登録ボタンが押された場合の処理
         # request.form.getで得られるのは全部str型
         service_name = request.form.get("service_name")  # 画面から送られてきたサービス名
         upper_limit = request.form.get("upper_limit")  # 画面から送られてきたサービスの使用上限金額
         db = get_db()
-        is_existed_service = db.execute(
+        is_existed_service = db.execute(  # 既に同じ名前のサービスが登録されているかどうかを確認
             "select service_name from service where service_name = ?",
             [
                 service_name,
             ],
         ).fetchall()
 
+        # 同名のサービスがある場合・入力が不正な場合のエラーキャッチ
         if is_existed_service:
             return render_template(
                 "service_register.html", error_message="同じ名前のサービスが既に存在しています"
@@ -103,6 +104,7 @@ def register_new_service():
                 "service_register.html", error_message="サービス名もしくは使用上限金額が空欄です"
             )
 
+        # ここからDBに登録する処理
         register_body = {
             "service_name": service_name,
             "current_usage": 0,
