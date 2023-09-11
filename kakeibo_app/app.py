@@ -27,6 +27,7 @@ def get_db():
 
 @app.route("/")
 def top():  # トップ画面を表示
+    # 年と月を取得
     tokyo_tz = datetime.timezone(datetime.timedelta(hours=9))
     dt = datetime.datetime.now(tokyo_tz)
 
@@ -35,7 +36,7 @@ def top():  # トップ画面を表示
         "select * from service"
     ).fetchall()  # これがsqlite3.Rowオブジェクトが入ったリストになっている
 
-    if service_detail_list != []:
+    if service_detail_list != []:  # テーブルにサービスが登録されていた場合の処理
         total_current_usage = sum(
             [service_detail["current_usage"] for service_detail in service_detail_list]
         )
@@ -56,7 +57,7 @@ def top():  # トップ画面を表示
             total_usage_ratio_with_percent=total_usage_ratio_with_percent,
             service_detail_list=service_detail_list,
         )
-    else:
+    else:  # サービスが登録されていなかった場合
         return render_template(
             "index.html",
             year=dt.year,
@@ -81,7 +82,7 @@ def show_registered_services():  # 登録したサービスの一覧を表示
 
 
 @app.route("/service_register", methods=["GET", "POST"])
-def register_new_service():
+def register_new_service():  # 新しいサービスを登録する
     if request.method == "POST":  # 登録ボタンが押された場合の処理
         # request.form.getで得られるのは全部str型
         service_name = request.form.get("service_name")  # 画面から送られてきたサービス名
@@ -121,16 +122,15 @@ def register_new_service():
                 ", ".join(["?"] * len(register_body)),
                 ")",
             ]
-        )
-        # db.execute("insert into memo (title, body) values (?,?)", [service_name, body])みたいな
+        )  # db.execute("insert into memo (title, body) values (?,?)", [service_name, body])みたいな形式
         db.execute(statement, [value for value in register_body.values()])
         db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
-        return redirect("/service_detail")  # DBに新たなメモを入れたら、TOP画面に戻る
+        return redirect("/service_detail")  # DBに新たなサービスを入れたら、TOP画面に戻る
     return render_template("service_register.html", error_message="")
 
 
 @app.route("/<service_name>/service_edit", methods=["GET", "POST"])
-def edit_service(service_name):
+def edit_service(service_name):  # サービスの上限金額を編集する
     if request.method == "POST":
         service_name = request.form.get("service_name")  # 画面から送られてきたサービス名
         upper_limit = request.form.get("upper_limit")  # 画面から送られてきたサービスの使用上限金額
@@ -155,7 +155,7 @@ def edit_service(service_name):
             [upper_limit, service_name],
         )
         db.commit()
-        return redirect("/service_detail")  # DBに新たなメモを入れたら、TOP画面に戻る
+        return redirect("/service_detail")  # DBの情報を編集したら、TOP画面に戻る
     db = get_db()
     post = db.execute(
         "select service_name, upper_limit from service where service_name = ?",
@@ -167,11 +167,12 @@ def edit_service(service_name):
 
 
 @app.route("/<service_name>/service_delete", methods=["GET", "POST"])
-def delete_service(service_name):
+def delete_service(service_name):  # 登録されているサービスを削除する
     if request.method == "POST":
         service_name = request.form.get("service_name")  # 画面から送られてきたメモのタイトル
+
+        # DBからサービスを削除する
         db = get_db()
-        print(service_name)
         db.execute(
             "delete from service where service_name = ?",
             [
@@ -179,7 +180,7 @@ def delete_service(service_name):
             ],
         )
         db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
-        return redirect("/service_detail")  # DBに新たなメモを入れたら、TOP画面に戻る
+        return redirect("/service_detail")  # DBからサービスを削除したら、TOP画面に戻る
     db = get_db()
     post = db.execute(
         "select service_name, upper_limit from service where service_name = ?",

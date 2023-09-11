@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+<!--何をする画面なのか表示-->
 <nav class="navbar navbar-light bg-light">
     <div class="container-fluid">
         <span class="navbar-brand mb-0 h1">サービス編集</span>
@@ -8,6 +9,7 @@
 
 <div class="container">
     <form method="POST">
+        <!--入力フォームの部分-->
         <div class="mb-3">
             <label for="service_name" class="form-label">サービス名</label>
             <input type="text" class="form-control" name="service_name" id="service_name" aria-describedby="emailHelp"
@@ -19,6 +21,7 @@
                 readonly>
         </div>
 
+        <!--削除ボタンと、確認のポップアップ-->
         <button type="button" class="btn btn-danger mb-12" data-toggle="modal" data-target="#testModal">削除</button>
         <div class="modal" id="testModal" tabindex="-1">
             <div class="modal-dialog">
