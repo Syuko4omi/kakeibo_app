@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<!--何をする画面なのか表示-->
+<nav class="navbar navbar-light bg-light">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">上限金額変更</span>
+    </div>
+</nav>
+
+{% if error_message != "" %}
+<!--不正な入力があったらnavbarの下に赤字で表示する-->
+<!--https://getbootstrap.jp/docs/5.0/components/alerts/-->
+<div class="alert alert-danger d-flex align-items-center" role="alert">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+        class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16">
+        <path
+            d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+    </svg>
+    <div>
+        {{error_message}}
+    </div>
+</div>
+{% endif %}
+
+<div class="container">
+    <form method="POST">
+        <!--入力フォームの部分-->
+        <div class="mb-3">
+            <label for="service_name" class="form-label">サービス名</label>
+            <input type="text" class="form-control" name="service_name" id="service_name" aria-describedby="emailHelp"
+                value="{{post.service_name}}" readonly>
+        </div>
+        <div class="mb-3">
+            <label for="upper_limit" class="form-label">使用上限金額</label>
+            <input type="number" class="form-control" name="upper_limit" id="upper_limit" value="{{post.upper_limit}}">
+        </div>
+
+        <!--編集完了ボタンと、確認のポップアップ-->
+        <button type="button" class="btn btn-primary mb-12" data-toggle="modal" data-target="#testModal">編集完了</button>
+        <div class="modal" id="testModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">編集完了</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p>編集を完了しますか？</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                        <button type="submit" class="btn btn-primary">編集完了</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

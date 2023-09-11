@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<!--何をする画面なのか表示-->
+<nav class="navbar navbar-light bg-light">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">サービス編集</span>
+    </div>
+</nav>
+
+<div class="container">
+    <form method="POST">
+        <!--入力フォームの部分-->
+        <div class="mb-3">
+            <label for="service_name" class="form-label">サービス名</label>
+            <input type="text" class="form-control" name="service_name" id="service_name" aria-describedby="emailHelp"
+                value="{{post.service_name}}" readonly>
+        </div>
+        <div class="mb-3">
+            <label for="upper_limit" class="form-label">使用上限金額</label>
+            <input type="number" class="form-control" name="upper_limit" id="upper_limit" value="{{post.upper_limit}}"
+                readonly>
+        </div>
+
+        <!--削除ボタンと、確認のポップアップ-->
+        <button type="button" class="btn btn-danger mb-12" data-toggle="modal" data-target="#testModal">削除</button>
+        <div class="modal" id="testModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">削除</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p>以下の内容を本当に削除しますか？</p>
+                        <p>サービス名: {{post.service_name}}</p>
+                        <p>使用上限金額: {{post.upper_limit}}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                        <button type="submit" class="btn btn-danger">削除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
