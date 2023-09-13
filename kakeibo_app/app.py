@@ -162,9 +162,15 @@ def top():  # トップ画面を表示
 # ここからサービス画面
 @app.route("/service_detail")
 def show_registered_services():  # 登録したサービスの一覧を表示
+    tokyo_tz = datetime.timezone(datetime.timedelta(hours=9))
+    dt = datetime.datetime.now(tokyo_tz)
+    year = str(dt.year)
+    month = "{:02}".format(dt.month)
+    yyyymm = year + "-" + month
+
     db = get_db()  # 接続を確立
     service_detail_list = db.execute(
-        "select * from service"
+        "select * from service where year_month = ?", [yyyymm]
     ).fetchall()  # これがsqlite3.Rowオブジェクトが入ったリストになっている
     return render_template(
         "service_detail.html", service_detail_list=service_detail_list
@@ -304,7 +310,7 @@ def show_registered_items(service_name):  # 登録した商品の一覧を表示
 
 
 @app.route("/item_register", methods=["GET", "POST"])
-def register_new_item():  # 新しいサービスを登録する
+def register_new_item():  # 新しい商品を登録する
     if request.method == "POST":  # 登録ボタンが押された場合の処理
         # request.form.getで得られるのは全部str型
         purchase_date = request.form.get("purchase_date")  # 画面から送られてきた購入日 2023-09-01とか
@@ -320,8 +326,15 @@ def register_new_item():  # 新しいサービスを登録する
                 item_name,
             ],
         ).fetchall()
-        service_detail_list = db.execute(  # ここでサービスを一意に特定する
-            "select * from service"
+        tokyo_tz = datetime.timezone(datetime.timedelta(hours=9))
+        dt = datetime.datetime.now(tokyo_tz)
+        year = str(dt.year)
+        month = "{:02}".format(dt.month)
+        yyyymm = year + "-" + month
+
+        db = get_db()  # 接続を確立
+        service_detail_list = db.execute(
+            "select * from service where year_month = ?", [yyyymm]
         ).fetchall()
 
         # 同じ商品が同じサービスで購入されている場合・入力が空欄の場合のエラーキャッチ
@@ -369,12 +382,111 @@ def register_new_item():  # 新しいサービスを登録する
         db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
         return redirect(f"/{service_name}/item_detail")  # DBに新たなサービスを入れたら、商品登録画面に戻る
 
+    tokyo_tz = datetime.timezone(datetime.timedelta(hours=9))
+    dt = datetime.datetime.now(tokyo_tz)
+    year = str(dt.year)
+    month = "{:02}".format(dt.month)
+    yyyymm = year + "-" + month
+
     db = get_db()  # 接続を確立
-    service_detail_list = db.execute(  # ここでサービスを一意に特定する
-        "select * from service"
+    service_detail_list = db.execute(
+        "select * from service where year_month = ?", [yyyymm]
     ).fetchall()
     return render_template(
         "item_register.html", error_message="", service_detail_list=service_detail_list
+    )
+
+
+@app.route("/<service_name>/item_edit/<item_id>", methods=["GET", "POST"])
+def edit_item(service_name, item_id):  # 商品を編集する
+    if request.method == "POST":  # 登録ボタンが押された場合の処理
+        # request.form.getで得られるのは全部str型
+        purchase_date = request.form.get("purchase_date")  # 画面から送られてきた購入日 2023-09-01とか
+        service_name = request.form.get("service_name")  # 画面から送られてきたサービス名
+        item_name = request.form.get("item_name")  # 画面から送られてきた商品名
+        item_price = request.form.get("item_price")  # 画面から送られてきた商品の金額
+        item_attribute = request.form.get("item_attribute")  # 画面から送られてきた商品の属性
+        tokyo_tz = datetime.timezone(datetime.timedelta(hours=9))
+        dt = datetime.datetime.now(tokyo_tz)
+        year = str(dt.year)
+        month = "{:02}".format(dt.month)
+        yyyymm = year + "-" + month
+
+        db = get_db()  # 接続を確立
+        service_detail_list = db.execute(
+            "select * from service where year_month = ?", [yyyymm]
+        ).fetchall()
+
+        # 入力が空欄の場合のエラーキャッチ
+        blank_input = [
+            entry == ""
+            for entry in [
+                purchase_date,
+                service_name,
+                item_name,
+                item_price,
+                item_attribute,
+            ]
+        ]
+        if True in blank_input:
+            objective_item = db.execute(
+                "select * from item where item_id = ?",
+                [
+                    item_id,
+                ],
+            ).fetchone()
+            tokyo_tz = datetime.timezone(datetime.timedelta(hours=9))
+            dt = datetime.datetime.now(tokyo_tz)
+            year = str(dt.year)
+            month = "{:02}".format(dt.month)
+            yyyymm = year + "-" + month
+
+            db = get_db()  # 接続を確立
+            service_detail_list = db.execute(
+                "select * from service where year_month = ?", [yyyymm]
+            ).fetchall()
+            return render_template(
+                "item_edit.html",
+                error_message="全て入力してください",
+                service_detail_list=service_detail_list,
+                objective_item=objective_item,
+            )
+
+        # DBに上書き登録する処理
+        db.execute(
+            "update item set purchase_date = ?, service_name = ?, item_name = ?, item_price = ?, item_attribute = ? where item_id = ?",
+            [
+                purchase_date,
+                service_name,
+                item_name,
+                item_price,
+                item_attribute,
+                item_id,
+            ],
+        )
+        db.commit()
+        return redirect(f"/{service_name}/item_detail")  # DBの情報を編集したら、TOP画面に戻る
+
+    db = get_db()
+    objective_item = db.execute(
+        "select * from item where item_id = ?",
+        [
+            item_id,
+        ],
+    ).fetchone()
+    tokyo_tz = datetime.timezone(datetime.timedelta(hours=9))
+    dt = datetime.datetime.now(tokyo_tz)
+    year = str(dt.year)
+    month = "{:02}".format(dt.month)
+    yyyymm = year + "-" + month
+    service_detail_list = db.execute(
+        "select * from service where year_month = ?", [yyyymm]
+    ).fetchall()
+    return render_template(
+        "item_edit.html",
+        error_message="",
+        objective_item=objective_item,
+        service_detail_list=service_detail_list,
     )
 
 
