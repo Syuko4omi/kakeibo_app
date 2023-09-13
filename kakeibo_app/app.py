@@ -194,7 +194,7 @@ def delete_service(service_name):  # 登録されているサービスを削除�
 
 # ここから商品画面
 @app.route("/<service_name>/item_detail")
-def show_registered_items(service_name):  # 登録したサービスの一覧を表示
+def show_registered_items(service_name):  # 登録した商品の一覧を表示
     """db = get_db()  # 接続を確立
     item_detail_list = db.execute(  # ここでサービスを一意に特定する
         "select * from item"
@@ -211,6 +211,60 @@ def show_registered_items(service_name):  # 登録したサービスの一覧を
         }
     ]
     return render_template("item_detail.html", item_detail_list=item_detail_list)
+
+
+@app.route("/item_register", methods=["GET", "POST"])
+def register_new_item():  # 新しいサービスを登録する
+    """if request.method == "POST":  # 登録ボタンが押された場合の処理
+    # request.form.getで得られるのは全部str型
+    item_name = request.form.get("item_name")  # 画面から送られてきたサービス名
+    upper_limit = request.form.get("upper_limit")  # 画面から送られてきたサービスの使用上限金額
+    db = get_db()
+    is_existed_item = db.execute(  # 既に同じ名前のサービスが登録されているかどうかを確認
+        "select item_name from item where item_name = ?",
+        [
+            item_name,
+        ],
+    ).fetchall()
+
+    # 同名のサービスがある場合・入力が空欄の場合のエラーキャッチ
+    if is_existed_item:
+        return render_template(
+            "service_register.html", error_message="同じ名前のサービスが既に存在しています"
+        )
+    if item_name == "" or upper_limit == "":
+        return render_template(
+            "service_register.html", error_message="サービス名もしくは使用上限金額が空欄です"
+        )
+
+    # ここからDBに登録する処理
+    register_body = {
+        "service_name": item,
+        "current_usage": 0,
+        "upper_limit": upper_limit,
+        "usage_ratio": 0.0,
+        "text_style_usage_ratio": "width:0.0%",
+        "usage_ratio_with_percent": "0.0%",
+    }
+    statement = "".join(
+        [
+            "insert into service (",
+            ", ".join("`" + key + "`" for key in register_body.keys()),
+            ") values (",
+            ", ".join(["?"] * len(register_body)),
+            ")",
+        ]
+    )  # db.execute("insert into memo (title, body) values (?,?)", [service_name, body])みたいな形式
+    db.execute(statement, [value for value in register_body.values()])
+    db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
+    return redirect("/service_detail")  # DBに新たなサービスを入れたら、TOP画面に戻る"""
+    db = get_db()  # 接続を確立
+    service_detail_list = db.execute(  # ここでサービスを一意に特定する
+        "select * from service"
+    ).fetchall()
+    return render_template(
+        "item_register.html", error_message="", service_detail_list=service_detail_list
+    )
 
 
 app.run()
