@@ -30,15 +30,45 @@ def top():  # トップ画面を表示
     # 年と月を取得
     tokyo_tz = datetime.timezone(datetime.timedelta(hours=9))
     dt = datetime.datetime.now(tokyo_tz)
+    year = str(dt.year)
+    month = "{:02}".format(dt.month)
+    yyyymm = year + "-" + month
 
     db = get_db()  # 接続を確立
     service_detail_list = db.execute(
-        "select * from service"
+        "select * from service where year_month = ?", [yyyymm]
     ).fetchall()  # これがsqlite3.Rowオブジェクトが入ったリストになっている
 
     if service_detail_list != []:  # テーブルにサービスが登録されていた場合の処理
+        item_detail_list = db.execute(
+            "select * from item where purchase_date like ?", [yyyymm + "%"]
+        ).fetchall()  # 該当の月に買った商品
+        expense_for_each_service = {}
+        for service_detail in service_detail_list:
+            expense_for_each_service[service_detail["service_name"]] = 0
+        for item in item_detail_list:
+            expense_for_each_service[item["service_name"]] += item["item_price"]
+        service_detail_list_with_each_data = []
+        for service_detail in service_detail_list:
+            service_name = service_detail["service_name"]
+            upper_limit = service_detail["upper_limit"]
+            current_usage = expense_for_each_service[service_name]
+            usage_ratio = round((current_usage * 100 / upper_limit), 1)
+            text_style_usage_ratio = f"width:{usage_ratio}%"
+            usage_ratio_with_percent = f"{usage_ratio}%"
+
+            service_detail_list_with_each_data.append(
+                {
+                    "service_name": service_name,
+                    "current_usage": current_usage,
+                    "upper_limit": upper_limit,
+                    "text_style_usage_ratio": text_style_usage_ratio,
+                    "usage_ratio_with_percent": usage_ratio_with_percent,
+                }
+            )
+
         total_current_usage = sum(
-            [service_detail["current_usage"] for service_detail in service_detail_list]
+            [expense for expense in expense_for_each_service.values()]
         )
         total_upper_limit = sum(
             [service_detail["upper_limit"] for service_detail in service_detail_list]
@@ -51,23 +81,82 @@ def top():  # トップ画面を表示
             "index.html",
             year=dt.year,
             month=dt.month,
-            total_current_usage=total_current_usage,
             total_upper_limit=total_upper_limit,
+            total_current_usage=total_current_usage,
             text_style_total_usage_ratio=text_style_total_usage_ratio,
             total_usage_ratio_with_percent=total_usage_ratio_with_percent,
-            service_detail_list=service_detail_list,
+            # service_detail_list=service_detail_list,
+            service_detail_list=service_detail_list_with_each_data,
         )
-    else:  # サービスが登録されていなかった場合
-        return render_template(
-            "index.html",
-            year=dt.year,
-            month=dt.month,
-            total_current_usage=0,
-            total_upper_limit=0,
-            text_style_total_usage_ratio="width:0%",
-            total_usage_ratio_with_percent="-",
-            service_detail_list=service_detail_list,
-        )
+    else:  # 今月分のサービスが登録されていなかった場合
+        is_service_exist = db.execute("select * from service").fetchone()
+        if is_service_exist != []:  # 以前にサービスが登録されていた場合
+            newest_service = db.execute(
+                "select * from service where service_id = (select max(service_id) from service)"
+            ).fetchone()
+            most_recent_day_recorded = newest_service["year_month"]
+            service_detail_list = db.execute(  # 直近の月で使っていたサービスを選ぶ
+                "select * from service where year_month = ?", [most_recent_day_recorded]
+            )
+            service_detail_list_with_each_data = []
+            for service_detail in service_detail_list:  # 上限は前の時と据え置き
+                service_name = service_detail["service_name"]
+                upper_limit = service_detail["upper_limit"]
+                current_usage = 0
+                usage_ratio = round((current_usage * 100 / upper_limit), 1)
+                text_style_usage_ratio = f"width:{usage_ratio}%"
+                usage_ratio_with_percent = f"{usage_ratio}%"
+
+                service_detail_list_with_each_data.append(
+                    {
+                        "service_name": service_name,
+                        "current_usage": current_usage,
+                        "upper_limit": upper_limit,
+                        "text_style_usage_ratio": text_style_usage_ratio,
+                        "usage_ratio_with_percent": usage_ratio_with_percent,
+                    }
+                )
+
+                db.execute(  # dbにデータを登録
+                    "insert into service (year_month, service_name, upper_limit) values (?, ?, ?)",
+                    [yyyymm, service_name, upper_limit],
+                )
+                db.commit()
+
+            total_current_usage = 0
+            total_upper_limit = sum(
+                [
+                    service_detail["upper_limit"]
+                    for service_detail in service_detail_list_with_each_data
+                ]
+            )
+            total_usage_ratio = round(
+                (total_current_usage * 100 / total_upper_limit), 1
+            )
+            text_style_total_usage_ratio = f"width:{total_usage_ratio}%"
+            total_usage_ratio_with_percent = f"{total_usage_ratio}%"
+
+            return render_template(
+                "index.html",
+                year=dt.year,
+                month=dt.month,
+                total_upper_limit=total_upper_limit,
+                total_current_usage=total_current_usage,
+                text_style_total_usage_ratio=text_style_total_usage_ratio,
+                total_usage_ratio_with_percent=total_usage_ratio_with_percent,
+                service_detail_list=service_detail_list_with_each_data,
+            )
+        else:  # 初めてサービスを使う場合
+            return render_template(
+                "index.html",
+                year=dt.year,
+                month=dt.month,
+                total_current_usage=0,
+                total_upper_limit=0,
+                text_style_total_usage_ratio="width:0%",
+                total_usage_ratio_with_percent="-",
+                service_detail_list=service_detail_list,
+            )
 
 
 # ここからサービス画面
@@ -88,12 +177,15 @@ def register_new_service():  # 新しいサービスを登録する
         # request.form.getで得られるのは全部str型
         service_name = request.form.get("service_name")  # 画面から送られてきたサービス名
         upper_limit = request.form.get("upper_limit")  # 画面から送られてきたサービスの使用上限金額
+        tokyo_tz = datetime.timezone(datetime.timedelta(hours=9))
+        dt = datetime.datetime.now(tokyo_tz)
+        year = str(dt.year)
+        month = "{:02}".format(dt.month)
+        yyyymm = year + "-" + month
         db = get_db()
         is_existed_service = db.execute(  # 既に同じ名前のサービスが登録されているかどうかを確認
-            "select service_name from service where service_name = ?",
-            [
-                service_name,
-            ],
+            "select service_name from service where service_name = ? and year_month = ?",
+            [service_name, yyyymm],
         ).fetchall()
 
         # 同名のサービスがある場合・入力が空欄の場合のエラーキャッチ
@@ -195,21 +287,19 @@ def delete_service(service_name):  # 登録されているサービスを削除�
 # ここから商品画面
 @app.route("/<service_name>/item_detail")
 def show_registered_items(service_name):  # 登録した商品の一覧を表示
-    """db = get_db()  # 接続を確立
+    tokyo_tz = datetime.timezone(datetime.timedelta(hours=9))
+    dt = datetime.datetime.now(tokyo_tz)
+    year = str(dt.year)
+    month = "{:02}".format(dt.month)
+    query_ym = year + "-" + month + "%"
+    db = get_db()  # 接続を確立
     item_detail_list = db.execute(  # ここでサービスを一意に特定する
-        "select * from item"
+        "select * from item where purchase_date like ? and service_name = ?",
+        [
+            query_ym,
+            service_name,
+        ],
     ).fetchall()  # これがsqlite3.Rowオブジェクトが入ったリストになっている"""
-    item_detail_list = [
-        {
-            "year": "2023",
-            "month": "9",
-            "day": "1",
-            "item_name": "item_1",
-            "item_price": "1000",
-            "attribute": "画像",
-            "service_name": service_name,
-        }
-    ]
     return render_template("item_detail.html", item_detail_list=item_detail_list)
 
 
@@ -217,7 +307,7 @@ def show_registered_items(service_name):  # 登録した商品の一覧を表示
 def register_new_item():  # 新しいサービスを登録する
     if request.method == "POST":  # 登録ボタンが押された場合の処理
         # request.form.getで得られるのは全部str型
-        purchase_date = request.form.get("purchase_date")  # 画面から送られてきた購入日
+        purchase_date = request.form.get("purchase_date")  # 画面から送られてきた購入日 2023-09-01とか
         service_name = request.form.get("service_name")  # 画面から送られてきたサービス名
         item_name = request.form.get("item_name")  # 画面から送られてきた商品名
         item_price = request.form.get("item_price")  # 画面から送られてきた商品の金額
@@ -277,7 +367,7 @@ def register_new_item():  # 新しいサービスを登録する
         )  # db.execute("insert into memo (title, body) values (?,?)", [service_name, body])みたいな形式
         db.execute(statement, [value for value in register_body.values()])
         db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
-        return redirect("/item_register")  # DBに新たなサービスを入れたら、商品登録画面に戻る
+        return redirect(f"/{service_name}/item_detail")  # DBに新たなサービスを入れたら、商品登録画面に戻る
 
     db = get_db()  # 接続を確立
     service_detail_list = db.execute(  # ここでサービスを一意に特定する

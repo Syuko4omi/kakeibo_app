@@ -22,10 +22,10 @@
         <tbody>
             {% for item in item_detail_list %}
             <tr>
-                <td>{{item.year}}年{{item.month}}月{{item.day}}日</td>
+                <td>{{item.purchase_date}}</td>
                 <td>{{item.item_name}}</td>
                 <td>{{item.item_price}}</td>
-                <td>{{item.attribute}}</td>
+                <td>{{item.item_attribute}}</td>
                 <td>{{item.service_name}}</td>
                 <td>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
