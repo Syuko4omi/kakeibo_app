@@ -28,7 +28,7 @@
         <div class="mb-3">
             <label for="purchase_date" class="form-label">購入した日付</label>
             <input type="date" class="form-control" name="purchase_date" id="purchase_date"
-                value={{objective_item.purchase_date}}>
+                value={{objective_item.purchase_date}} readonly>
         </div>
         <div class="form-group mb-3">
             <label for="service_name" class="form-label">購入したサービス</label>
@@ -47,12 +47,12 @@
         <div class="mb-3">
             <label for="item_name" class="form-label">商品名</label>
             <input type="text" class="form-control" name="item_name" id="item_name" aria-describedby="emailHelp"
-                value={{objective_item.item_name}}>
+                value={{objective_item.item_name}} readonly>
         </div>
         <div class="mb-3">
             <label for="item_price" class="form-label">値段</label>
             <input type="number" class="form-control" name="item_price" id="item_price" placeholder="1000" min="1"
-                value={{objective_item.item_price}}>
+                value={{objective_item.item_price}} readonly>
         </div>
         <div class="form-group mb-3">
             <label for="item_attribute" class="form-label">属性</label>

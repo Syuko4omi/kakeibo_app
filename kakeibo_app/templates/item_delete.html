@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<!--何をする画面なのか表示-->
+<nav class="navbar navbar-light bg-light">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">商品削除</span>
+    </div>
+</nav>
+
+<div class="container">
+    <form method="POST">
+        <!--入力フォームの部分-->
+        <div class="mb-3">
+            <label for="purchase_date" class="form-label">購入した日付</label>
+            <input type="date" class="form-control" name="purchase_date" id="purchase_date"
+                value={{objective_item.purchase_date}}>
+        </div>
+        <div class="form-group mb-3">
+            <label for="service_name" class="form-label">購入したサービス</label>
+            <div class="input-group">
+                <select class="form-control" name="service_name" id="service_name">
+                    {% for service in service_detail_list %}
+                    {% if service.service_name == objective_item.service_name %}
+                    <option selected>{{service.service_name}}</option>
+                    {% else %}
+                    <option>{{service.service_name}}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="item_name" class="form-label">商品名</label>
+            <input type="text" class="form-control" name="item_name" id="item_name" aria-describedby="emailHelp"
+                value={{objective_item.item_name}}>
+        </div>
+        <div class="mb-3">
+            <label for="item_price" class="form-label">値段</label>
+            <input type="number" class="form-control" name="item_price" id="item_price" placeholder="1000" min="1"
+                value={{objective_item.item_price}}>
+        </div>
+        <div class="form-group mb-3">
+            <label for="item_attribute" class="form-label">属性</label>
+            <div class="input-group">
+                <select class="form-control" name="item_attribute" id="item_attribute">
+                    <option>CG・イラスト</option>
+                    <option>ボイス・ASMR</option>
+                    <option>動画作品</option>
+                    <option>ゲーム</option>
+                    <option>音楽作品</option>
+                </select>
+            </div>
+        </div>
+
+        <!--削除ボタンと、確認のポップアップ-->
+        <button type="button" class="btn btn-danger mb-12" data-toggle="modal" data-target="#testModal">削除</button>
+        <div class="modal" id="testModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">削除</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p>以下の内容を本当に削除しますか？</p>
+                        <p>サービス名: {{objective_item.service_name}}</p>
+                        <p>商品名: {{objective_item.item_name}}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                        <button type="submit" class="btn btn-danger">削除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

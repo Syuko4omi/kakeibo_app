@@ -490,4 +490,38 @@ def edit_item(service_name, item_id):  # 商品を編集する
     )
 
 
+@app.route("/<service_name>/item_delete/<item_id>", methods=["GET", "POST"])
+def delete_item(service_name, item_id):  # 登録されているサービスを削除する
+    if request.method == "POST":
+        # DBからサービスを削除する
+        db = get_db()
+        db.execute(
+            "delete from item where item_id = ?",
+            [item_id],
+        )
+        db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
+        return redirect("/service_detail")  # DBからサービスを削除したら、TOP画面に戻る
+
+    db = get_db()
+    objective_item = db.execute(
+        "select * from item where item_id = ?",
+        [
+            item_id,
+        ],
+    ).fetchone()
+    tokyo_tz = datetime.timezone(datetime.timedelta(hours=9))
+    dt = datetime.datetime.now(tokyo_tz)
+    year = str(dt.year)
+    month = "{:02}".format(dt.month)
+    yyyymm = year + "-" + month
+    service_detail_list = db.execute(
+        "select * from service where year_month = ?", [yyyymm]
+    ).fetchall()
+    return render_template(
+        "item_delete.html",
+        objective_item=objective_item,
+        service_detail_list=service_detail_list,
+    )
+
+
 app.run()
