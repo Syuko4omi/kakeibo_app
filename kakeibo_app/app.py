@@ -70,6 +70,7 @@ def top():  # トップ画面を表示
         )
 
 
+# ここからサービス画面
 @app.route("/service_detail")
 def show_registered_services():  # 登録したサービスの一覧を表示
     db = get_db()  # 接続を確立
@@ -189,6 +190,27 @@ def delete_service(service_name):  # 登録されているサービスを削除�
         ],
     ).fetchone()
     return render_template("service_delete.html", post=post)
+
+
+# ここから商品画面
+@app.route("/<service_name>/item_detail")
+def show_registered_items(service_name):  # 登録したサービスの一覧を表示
+    """db = get_db()  # 接続を確立
+    item_detail_list = db.execute(  # ここでサービスを一意に特定する
+        "select * from item"
+    ).fetchall()  # これがsqlite3.Rowオブジェクトが入ったリストになっている"""
+    item_detail_list = [
+        {
+            "year": "2023",
+            "month": "9",
+            "day": "1",
+            "item_name": "item_1",
+            "item_price": "1000",
+            "attribute": "画像",
+            "service_name": service_name,
+        }
+    ]
+    return render_template("item_detail.html", item_detail_list=item_detail_list)
 
 
 app.run()
