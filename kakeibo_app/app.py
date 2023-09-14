@@ -283,7 +283,30 @@ def show_registered_items(service_name):  # 登録した商品の一覧を表示
             service_name,
         ],
     ).fetchall()
-    return render_template("item_detail.html", item_detail_list=item_detail_list)
+    service_data = db.execute(  # 削除画面を表示するために対象のサービスの内容を取得
+        "select service_name, upper_limit from service where service_name = ? and year_month = ?",
+        [service_name, yyyymm],
+    ).fetchone()
+
+    current_usage = sum([item["item_price"] for item in item_detail_list])
+    upper_limit = service_data["upper_limit"]
+    usage_ratio = round((current_usage * 100 / upper_limit), 1)
+    text_style_usage_ratio = f"width:{usage_ratio}%"
+    usage_ratio_with_percent = f"{usage_ratio}%"
+    service_detail = {
+        "current_usage": current_usage,
+        "upper_limit": upper_limit,
+        "text_style_usage_ratio": text_style_usage_ratio,
+        "usage_ratio_with_percent": usage_ratio_with_percent,
+    }
+
+    return render_template(
+        "item_detail.html",
+        item_detail_list=item_detail_list,
+        year=yyyymm[:4],
+        month=yyyymm[5:],
+        service_detail=service_detail,
+    )
 
 
 @app.route("/item_register", methods=["GET", "POST"])

@@ -6,6 +6,31 @@
     </div>
 </nav>
 
+<div class="jumbotron jumbotron-fluid bg-dark">
+    <div class="container text-white">
+        <h1>{{year}}年{{month}}月</h1>
+        <p>{{service_detail.current_usage}}円/{{service_detail.upper_limit}}円</p>
+        {% if service_detail.upper_limit != 0 %}
+        {% if service_detail.current_usage / service_detail.upper_limit < 0.8 %} <div class="progress"
+            style="height: 30px;">
+            <div class="progress-bar bg-success" style={{service_detail.text_style_usage_ratio}} role="progressbar">
+                {{service_detail.usage_ratio_with_percent}}🤑</div>
+    </div>
+    {% elif 0.8 <= service_detail.current_usage / service_detail.upper_limit < 1 %} <div class="progress"
+        style="height: 30px;">
+        <div class="progress-bar bg-warning" style={{service_detail.text_style_usage_ratio}} role="progressbar">
+            {{service_detail.usage_ratio_with_percent}}🫨</div>
+</div>
+{% else %}
+<div class="progress" style="height: 30px;">
+    <div class="progress-bar bg-danger" style={{service_detail.text_style_usage_ratio}} role="progressbar">
+        {{service_detail.usage_ratio_with_percent}}💸</div>
+</div>
+{% endif %}
+{% endif %}
+</div>
+</div>
+
 <div class="container">
     <table class="table table-striped">
         <thead>
