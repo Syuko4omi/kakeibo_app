@@ -44,7 +44,8 @@ def top():  # トップ画面を表示
             service_detail["service_name"]: 0 for service_detail in service_detail_list
         }
         for item in item_detail_list:
-            expense_for_each_service[item["service_name"]] += item["item_price"]
+            if item["service_name"] in expense_for_each_service:
+                expense_for_each_service[item["service_name"]] += item["item_price"]
 
         service_detail_list_with_each_data = []
         for service_detail in service_detail_list:
@@ -320,6 +321,7 @@ def register_new_item():  # 新しい商品を登録する
                 "item_register.html",
                 error_message="同じ名前の商品がこのサービスで既に購入されています",
                 service_detail_list=service_detail_list,
+                item_attribute_list=ITEM_ATTRIBUTE_LIST,
             )
         if (
             is_there_empty_entry(
@@ -337,6 +339,7 @@ def register_new_item():  # 新しい商品を登録する
                 "item_register.html",
                 error_message="全て入力してください",
                 service_detail_list=service_detail_list,
+                item_attribute_list=ITEM_ATTRIBUTE_LIST,
             )
 
         # ここからDBに登録する処理
@@ -403,8 +406,9 @@ def edit_item(service_name, item_id):  # 商品を編集する
             return render_template(
                 "item_edit.html",
                 error_message="全て入力してください",
-                service_detail_list=service_detail_list,
                 objective_item=objective_item,
+                service_detail_list=service_detail_list,
+                item_attribute_list=ITEM_ATTRIBUTE_LIST,
             )
 
         # DBに上書き登録する処理
@@ -442,7 +446,7 @@ def delete_item(service_name, item_id):  # 登録されているサービスを�
             [item_id],
         )
         db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
-        return redirect("/service_detail")  # DBからサービスを削除したら、TOP画面に戻る
+        return redirect(f"/{service_name}/item_detail")  # DBからサービスを削除したら、TOP画面に戻る
 
     objective_item = db.execute(
         "select * from item where item_id = ?",
