@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+<nav class="navbar navbar-light bg-light">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">商品一覧</span>
+    </div>
+</nav>
+
+<div class="jumbotron jumbotron-fluid bg-dark">
+    <div class="container text-white">
+        <h1>節約したお金で買ったもの</h1>
+
+        <p>{{sum_of_total_usage}}円/{{sum_of_total_upper_limit}}円</p>
+        {% if sum_of_total_upper_limit > 0 %}
+        {% if sum_of_total_usage / sum_of_total_upper_limit < 0.8 %} <div class="progress" style="height: 30px;">
+            <div class="progress-bar bg-success" style={{text_style_usage_ratio}} role="progressbar">
+                {{usage_ratio_with_percent}}🤑</div>
+    </div>
+    {% elif 0.8 <= sum_of_total_usage / sum_of_total_upper_limit < 1 %} <div class="progress" style="height: 30px;">
+        <div class="progress-bar bg-warning" style={{text_style_usage_ratio}} role="progressbar">
+            {{usage_ratio_with_percent}}🫨</div>
+</div>
+{% else %}
+<div class="progress" style="height: 30px;">
+    <div class="progress-bar bg-danger" style={{text_style_usage_ratio}} role="progressbar">
+        {{usage_ratio_with_percent}}💸</div>
+</div>
+{% endif %}
+{% endif %}
+</div>
+</div>
+
+<div class="container">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">購入日</th>
+                <th scope="col">商品名</th>
+                <th scope="col">値段</th>
+                <th scope="col">属性</th>
+                <th scope="col">サービス名</th>
+                <th scope="col">内容変更</th>
+                <th scope="col">削除</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for extra_item in extra_item_detail_list %}
+            <tr>
+                <td>{{extra_item.purchase_date}}</td>
+                <td>{{extra_item.extra_item_name}}</td>
+                <td>{{extra_item.extra_item_price}}</td>
+                <td>{{extra_item.extra_item_attribute}}</td>
+                <td>{{extra_item.service_name}}</td>
+                <td>
+                    <!--商品の編集-->
+                    <a href="/extra_item_edit/{{extra_item.extra_item_id}}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-pencil-square" viewBox="0 0 16 16">
+                            <path
+                                d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                            <path fill-rule="evenodd"
+                                d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z" />
+                        </svg>
+                    </a>
+                </td>
+                <td>
+                    <!--商品の削除-->
+                    <a href="/extra_item_delete/{{extra_item.extra_item_id}}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-trash3" viewBox="0 0 16 16">
+                            <path
+                                d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5ZM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1h-.995a.59.59 0 0 0-.01 0H11Zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5h9.916Zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47ZM8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5Z" />
+                        </svg>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="/extra_item_register">
+        <button type="button" class="btn btn-primary mb-12" data-toggle="modal" data-target="#testModal">商品登録<svg
+                xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                class="bi bi-caret-right-fill" viewBox="0 0 16 16">
+                <path
+                    d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z" />
+            </svg></button></a>
+</div>
+
+{% endblock %}

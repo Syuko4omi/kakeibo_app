@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, g
 import sqlite3
 
 from config import DATABASE, ITEM_ATTRIBUTE_LIST
-from util import get_current_yyyymm, is_there_empty_entry
+from util import get_current_yyyymm, is_there_empty_entry, get_total_usage_info
 
 app = Flask(__name__)
 
@@ -591,6 +591,168 @@ def show_graph():
         total_usage=total_usage,
         sum_of_total_upper_limit=sum(total_upper_limit),
         sum_of_total_usage=sum(total_usage),
+    )
+
+
+# ここから貯金画面
+@app.route("/extra_item_detail")
+def show_registered_extra_items():  # 登録した商品の一覧を表示
+    db = get_db()  # 接続を確立
+    service_detail_list = db.execute(
+        "select * from service",
+    ).fetchall()
+    item_detail_list = db.execute("select * from item").fetchall()
+    (
+        _,
+        _,
+        _,
+        sum_of_total_upper_limit,
+        sum_of_total_usage,
+        _,
+    ) = get_total_usage_info(service_detail_list, item_detail_list)
+
+    extra_money = sum_of_total_upper_limit - sum_of_total_usage
+    extra_item_detail_list = db.execute("select * from extra_item").fetchall()
+    extra_item_usage = sum(
+        [extra_item["extra_item_price"] for extra_item in extra_item_detail_list]
+    )
+    extra_usage_ratio = round((extra_item_usage * 100) / extra_money, 1)
+
+    return render_template(
+        "extra_item_detail.html",
+        extra_item_detail_list=extra_item_detail_list,
+        sum_of_total_upper_limit=extra_money,
+        sum_of_total_usage=extra_item_usage,
+        text_style_usage_ratio=f"width:{extra_usage_ratio}%",
+        usage_ratio_with_percent=f"{extra_usage_ratio}%",
+    )
+
+
+@app.route("/extra_item_register", methods=["GET", "POST"])
+def register_new_extra_item():  # 新しい商品を登録する
+    db = get_db()
+
+    if request.method == "POST":  # 登録ボタンが押された場合の処理
+        # request.form.getで得られるのは全部str型
+        purchase_date = request.form.get("purchase_date")  # 画面から送られてきた購入日 2023-09-01とか
+        service_name = request.form.get("service_name")  # 画面から送られてきたサービス名
+        extra_item_name = request.form.get("extra_item_name")  # 画面から送られてきた商品名
+        extra_item_price = request.form.get("extra_item_price")  # 画面から送られてきた商品の金額
+        extra_item_attribute = request.form.get(
+            "extra_item_attribute"
+        )  # 画面から送られてきた商品の属性
+
+        # ここからDBに登録する処理
+        register_body = {
+            "purchase_date": purchase_date,
+            "service_name": service_name,
+            "extra_item_name": extra_item_name,
+            "extra_item_price": extra_item_price,
+            "extra_item_attribute": extra_item_attribute,
+        }
+        statement = "".join(
+            [
+                "insert into extra_item (",
+                ", ".join("`" + key + "`" for key in register_body.keys()),
+                ") values (",
+                ", ".join(["?"] * len(register_body)),
+                ")",
+            ]
+        )  # db.execute("insert into memo (title, body) values (?,?)", [service_name, body])みたいな形式
+        db.execute(statement, [value for value in register_body.values()])
+        db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
+        return redirect("/extra_item_detail")  # DBに新たなサービスを入れたら、商品登録画面に戻る
+
+    return render_template(
+        "extra_item_register.html",
+        error_message="",
+        extra_item_attribute_list=ITEM_ATTRIBUTE_LIST,
+    )
+
+
+@app.route("/extra_item_edit/<extra_item_id>", methods=["GET", "POST"])
+def edit_extra_item(extra_item_id):  # 商品を編集する
+    db = get_db()  # 接続を確立
+    objective_extra_item = db.execute(  # 編集対象の商品
+        "select * from extra_item where extra_item_id = ?", [extra_item_id]
+    ).fetchone()
+
+    if request.method == "POST":  # 登録ボタンが押された場合の処理
+        # request.form.getで得られるのは全部str型
+        purchase_date = request.form.get("purchase_date")  # 画面から送られてきた購入日 2023-09-01とか
+        service_name = request.form.get("service_name")  # 画面から送られてきたサービス名
+        extra_item_name = request.form.get("extra_item_name")  # 画面から送られてきた商品名
+        extra_item_price = request.form.get("extra_item_price")  # 画面から送られてきた商品の金額
+        extra_item_attribute = request.form.get(
+            "extra_item_attribute"
+        )  # 画面から送られてきた商品の属性
+
+        # 入力が空欄の場合のエラーキャッチ
+        if (
+            is_there_empty_entry(
+                [
+                    purchase_date,
+                    service_name,
+                    extra_item_name,
+                    extra_item_price,
+                    extra_item_attribute,
+                ]
+            )
+            is True
+        ):
+            return render_template(
+                "extra_item_edit.html",
+                error_message="全て入力してください",
+                objective_extra_item=objective_extra_item,
+                extra_item_attribute_list=ITEM_ATTRIBUTE_LIST,
+            )
+
+        # DBに上書き登録する処理
+        db.execute(
+            "update extra_item set purchase_date = ?, service_name = ?, extra_item_name = ?, extra_item_price = ?, extra_item_attribute = ? where extra_item_id = ?",
+            [
+                purchase_date,
+                service_name,
+                extra_item_name,
+                extra_item_price,
+                extra_item_attribute,
+                extra_item_id,
+            ],
+        )
+        db.commit()
+        return redirect("/extra_item_detail")  # DBの情報を編集したら、TOP画面に戻る
+
+    return render_template(
+        "extra_item_edit.html",
+        error_message="",
+        objective_extra_item=objective_extra_item,
+        extra_item_attribute_list=ITEM_ATTRIBUTE_LIST,
+    )
+
+
+@app.route("/extra_item_delete/<extra_item_id>", methods=["GET", "POST"])
+def delete_extra_item(extra_item_id):  # 登録されているサービスを削除する
+    db = get_db()
+
+    if request.method == "POST":
+        # DBからサービスを削除する
+        db.execute(
+            "delete from extra_item where extra_item_id = ?",
+            [extra_item_id],
+        )
+        db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
+        return redirect(f"/extra_item_detail")  # DBからサービスを削除したら、TOP画面に戻る
+
+    objective_extra_item = db.execute(
+        "select * from extra_item where extra_item_id = ?",
+        [
+            extra_item_id,
+        ],
+    ).fetchone()
+    return render_template(
+        "extra_item_delete.html",
+        objective_extra_item=objective_extra_item,
+        extra_item_attribute_list=ITEM_ATTRIBUTE_LIST,
     )
 
 

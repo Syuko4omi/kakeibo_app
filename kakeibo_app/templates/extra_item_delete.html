@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<!--何をする画面なのか表示-->
+<nav class="navbar navbar-light bg-light">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">商品削除</span>
+    </div>
+</nav>
+
+<div class="container">
+    <form method="POST">
+        <!--入力フォームの部分-->
+        <div class="mb-3">
+            <label for="purchase_date" class="form-label">購入した日付</label>
+            <input type="date" class="form-control" name="purchase_date" id="purchase_date"
+                value={{objective_extra_item.purchase_date}} readonly>
+        </div>
+        <div class="form-group mb-3">
+            <label for="service_name" class="form-label">購入したサービス</label>
+            <input type="text" class="form-control" name="service_name" id="service_name"
+                value={{objective_extra_item.service_name}} readonly>
+        </div>
+        <div class="mb-3">
+            <label for="extra_item_name" class="form-label">商品名</label>
+            <input type="text" class="form-control" name="extra_item_name" id="extra_item_name"
+                value={{objective_extra_item.extra_item_name}} readonly>
+        </div>
+        <div class="mb-3">
+            <label for="extra_item_price" class="form-label">値段</label>
+            <input type="number" class="form-control" name="extra_item_price" id="extra_item_price" placeholder="1000"
+                min="1" value={{objective_extra_item.extra_item_price}} readonly>
+        </div>
+        <div class="form-group mb-3">
+            <label for="extra_item_attribute" class="form-label">属性</label>
+            <div class="input-group">
+                <select class="form-control" name="extra_item_attribute" id="extra_item_attribute">
+                    {% for extra_item_attribute in extra_item_attribute_list %}
+                    {% if extra_item_attribute == objective_extra_item.extra_item_attribute %}
+                    <option>{{extra_item_attribute}}</option>
+                    {% else %}
+                    <option disabled>{{extra_item_attribute}}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!--削除ボタンと、確認のポップアップ-->
+        <button type="button" class="btn btn-danger mb-12" data-toggle="modal" data-target="#testModal">削除</button>
+        <div class="modal" id="testModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">削除</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p>以下の内容を本当に削除しますか？</p>
+                        <p>サービス名: {{objective_extra_item.service_name}}</p>
+                        <p>商品名: {{objective_extra_item.extra_item_name}}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                        <button type="submit" class="btn btn-danger">削除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
