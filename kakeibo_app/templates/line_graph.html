@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kakeibo app</title>
+    <!--CDN(CSS部分)　開始-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css"
+        integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <!--CDN(CSS部分)　終了-->
+</head>
+
+<style>
+    .container {
+        width: 70%;
+        margin: 15px auto;
+    }
+
+    body {
+        text-align: center;
+        color: green;
+    }
+
+    h2 {
+        text-align: center;
+        font-family: "Verdana", sans-serif;
+        font-size: 30px;
+    }
+</style>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">アプリの名前</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/service_detail">🏬サービス一覧</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/item_register">🎁商品登録</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/history">📝履歴</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <nav class="navbar navbar-light bg-light">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">履歴</span>
+        </div>
+    </nav>
+
+    <div class="jumbotron jumbotron-fluid bg-dark">
+        <div class="container text-white">
+            <h1>使用金額合計：{{sum_of_total_usage}}円</h1>
+            <h1>上限金額合計：{{sum_of_total_upper_limit}}円</h1>
+            {% if sum_of_total_usage < sum_of_total_upper_limit %} <p>これまでに{{ sum_of_total_upper_limit -
+                sum_of_total_usage }}円節約しました</p>
+                {% else %}
+                <p>これまでに{{ sum_of_total_usage - sum_of_total_upper_limit}}円浪費しました</p>
+                {% endif %}
+                <button type="button" class="btn btn-primary mb-12" data-toggle="modal"
+                    data-target="#testModal">節約したお金を使う<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                        fill="currentColor" class="bi bi-caret-right-fill" viewBox="0 0 16 16">
+                        <path
+                            d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z" />
+                    </svg></button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!--<h2>使用金額と上限金額</h2>-->
+        <div>
+            <canvas id="myChart"></canvas>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js" type="text/javascript">
+    </script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.2.2/Chart.min.js"></script>
+
+</body>
+
+<script>
+    let ctx = document.getElementById("myChart").getContext("2d");
+    var recorded_year_month_list = {{ recorded_year_month_list | tojson}};
+    var total_upper_limit = {{ total_upper_limit | tojson}};
+    var total_usage = {{ total_usage | tojson}};
+    let myChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: recorded_year_month_list,
+            datasets: [
+                {
+                    label: "使用金額",
+                    data: total_usage,
+                    backgroundColor: "rgba(153,205,1,0.6)",
+                },
+                {
+                    label: "上限金額",
+                    data: total_upper_limit,
+                    backgroundColor: "rgba(155,153,10,0.6)",
+                },
+            ],
+        },
+    });
+</script>
+
+</html>

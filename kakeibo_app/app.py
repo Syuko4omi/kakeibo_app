@@ -272,9 +272,8 @@ def delete_service(service_name):  # 登録されているサービスを削除�
 
 
 # ここから商品画面
-@app.route("/<service_name>/item_detail")
-def show_registered_items(service_name):  # 登録した商品の一覧を表示
-    yyyymm = get_current_yyyymm()
+@app.route("/<service_name>/<yyyymm>/item_detail")
+def show_registered_items(service_name, yyyymm):  # 登録した商品の一覧を表示
     db = get_db()  # 接続を確立
     item_detail_list = db.execute(  # 特定のサービスについて、今月購入した商品を取得する
         "select * from item where purchase_date like ? and service_name = ?",
@@ -288,25 +287,50 @@ def show_registered_items(service_name):  # 登録した商品の一覧を表示
         [service_name, yyyymm],
     ).fetchone()
 
-    current_usage = sum([item["item_price"] for item in item_detail_list])
-    upper_limit = service_data["upper_limit"]
-    usage_ratio = round((current_usage * 100 / upper_limit), 1)
-    text_style_usage_ratio = f"width:{usage_ratio}%"
-    usage_ratio_with_percent = f"{usage_ratio}%"
-    service_detail = {
-        "current_usage": current_usage,
-        "upper_limit": upper_limit,
-        "text_style_usage_ratio": text_style_usage_ratio,
-        "usage_ratio_with_percent": usage_ratio_with_percent,
-    }
+    if service_data is not None:
+        current_usage = sum([item["item_price"] for item in item_detail_list])
+        service_name = service_data["service_name"]
+        upper_limit = service_data["upper_limit"]
+        usage_ratio = round((current_usage * 100 / upper_limit), 1)
+        text_style_usage_ratio = f"width:{usage_ratio}%"
+        usage_ratio_with_percent = f"{usage_ratio}%"
+        service_detail = {
+            "service_name": service_name,
+            "current_usage": current_usage,
+            "upper_limit": upper_limit,
+            "text_style_usage_ratio": text_style_usage_ratio,
+            "usage_ratio_with_percent": usage_ratio_with_percent,
+        }
 
-    return render_template(
-        "item_detail.html",
-        item_detail_list=item_detail_list,
-        year=yyyymm[:4],
-        month=yyyymm[5:],
-        service_detail=service_detail,
-    )
+        return render_template(
+            "item_detail.html",
+            item_detail_list=item_detail_list,
+            year=yyyymm[:4],
+            month=yyyymm[5:],
+            service_detail=service_detail,
+        )
+    else:
+        current_usage = sum([item["item_price"] for item in item_detail_list])
+        service_name = service_name
+        upper_limit = 0
+        usage_ratio = 0
+        text_style_usage_ratio = "width:0.0%"
+        usage_ratio_with_percent = "-"
+        service_detail = {
+            "service_name": service_name,
+            "current_usage": current_usage,
+            "upper_limit": upper_limit,
+            "text_style_usage_ratio": text_style_usage_ratio,
+            "usage_ratio_with_percent": usage_ratio_with_percent,
+        }
+
+        return render_template(
+            "item_detail.html",
+            item_detail_list=item_detail_list,
+            year=yyyymm[:4],
+            month=yyyymm[5:],
+            service_detail=service_detail,
+        )
 
 
 @app.route("/item_register", methods=["GET", "POST"])
@@ -384,7 +408,9 @@ def register_new_item():  # 新しい商品を登録する
         )  # db.execute("insert into memo (title, body) values (?,?)", [service_name, body])みたいな形式
         db.execute(statement, [value for value in register_body.values()])
         db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
-        return redirect(f"/{service_name}/item_detail")  # DBに新たなサービスを入れたら、商品登録画面に戻る
+        return redirect(
+            f"/{service_name}/{purchase_date[:7]}/item_detail"
+        )  # DBに新たなサービスを入れたら、商品登録画面に戻る
 
     return render_template(
         "item_register.html",
@@ -447,7 +473,9 @@ def edit_item(service_name, item_id):  # 商品を編集する
             ],
         )
         db.commit()
-        return redirect(f"/{service_name}/item_detail")  # DBの情報を編集したら、TOP画面に戻る
+        return redirect(
+            f"/{service_name}/{purchase_date[:7]}/item_detail"
+        )  # DBの情報を編集したら、TOP画面に戻る
 
     return render_template(
         "item_edit.html",
@@ -464,12 +492,17 @@ def delete_item(service_name, item_id):  # 登録されているサービスを�
 
     if request.method == "POST":
         # DBからサービスを削除する
+        purchase_date = db.execute(
+            "select purchase_date from item where item_id = ?", [item_id]
+        ).fetchone()["purchase_date"]
         db.execute(
             "delete from item where item_id = ?",
             [item_id],
         )
         db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
-        return redirect(f"/{service_name}/item_detail")  # DBからサービスを削除したら、TOP画面に戻る
+        return redirect(
+            f"/{service_name}/{purchase_date[:7]}/item_detail"
+        )  # DBからサービスを削除したら、TOP画面に戻る
 
     objective_item = db.execute(
         "select * from item where item_id = ?",
@@ -486,6 +519,78 @@ def delete_item(service_name, item_id):  # 登録されているサービスを�
         objective_item=objective_item,
         service_detail_list=service_detail_list,
         item_attribute_list=ITEM_ATTRIBUTE_LIST,
+    )
+
+
+@app.route("/history", methods=["GET", "POST"])
+def show_graph():
+    db = get_db()
+    service_detail_list = db.execute(
+        "select * from service",
+    ).fetchall()
+    # いくら節約できたかを可視化したいので、サービスの上限金額が記録されている月だけ選ぶ
+    recorded_year_month_list = list(
+        set([service_detail["year_month"] for service_detail in service_detail_list])
+    )
+    recorded_year_month_list.sort()
+
+    total_upper_limit_and_usage_for_each_month = {}
+    for year_month in recorded_year_month_list:
+        total_upper_limit_and_usage_for_each_month[year_month] = {
+            "total_upper_limit": 0,
+            "total_usage": 0,
+        }
+
+    for service_detail in service_detail_list:
+        total_upper_limit_and_usage_for_each_month[service_detail["year_month"]][
+            "total_upper_limit"
+        ] += service_detail["upper_limit"]
+
+    item_detail_list = db.execute("select * from item").fetchall()
+    for item_detail in item_detail_list:
+        # サービスの使用上限金額が決まっている月に購入された商品のみ購入する
+        if (
+            item_detail["purchase_date"][:7]
+            in total_upper_limit_and_usage_for_each_month
+        ):
+            total_upper_limit_and_usage_for_each_month[
+                item_detail["purchase_date"][:7]
+            ]["total_usage"] += item_detail["item_price"]
+
+    total_upper_limit = [
+        total_upper_limit_and_usage["total_upper_limit"]
+        for total_upper_limit_and_usage in total_upper_limit_and_usage_for_each_month.values()
+    ]
+    total_usage = [
+        total_upper_limit_and_usage["total_usage"]
+        for total_upper_limit_and_usage in total_upper_limit_and_usage_for_each_month.values()
+    ]
+
+    # グラフの見栄えを良くするために、最初に記録された月より一ヶ月前にデータを追加する
+    first_recorded_year_month = recorded_year_month_list[0]
+    if first_recorded_year_month[5:] == "01":
+        previous_year = str(int(first_recorded_year_month[:4]) - 1)
+        previous_month = "12"
+        recorded_year_month_list = [
+            previous_year + "-" + previous_month
+        ] + recorded_year_month_list
+        total_upper_limit = [0] + total_upper_limit
+        total_usage = [0] + total_usage
+    else:
+        previous_month = str(int(first_recorded_year_month[5:]) - 1).zfill(2)
+        recorded_year_month_list = [
+            first_recorded_year_month[:4] + "-" + previous_month
+        ] + recorded_year_month_list
+        total_upper_limit = [0] + total_upper_limit
+        total_usage = [0] + total_usage
+
+    return render_template(
+        "line_graph.html",
+        recorded_year_month_list=recorded_year_month_list,
+        total_upper_limit=total_upper_limit,
+        total_usage=total_usage,
+        sum_of_total_upper_limit=sum(total_upper_limit),
+        sum_of_total_usage=sum(total_usage),
     )
 
 

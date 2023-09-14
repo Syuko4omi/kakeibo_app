@@ -8,7 +8,55 @@
 
 <div class="jumbotron jumbotron-fluid bg-dark">
     <div class="container text-white">
-        <h1>{{year}}年{{month}}月</h1>
+        <h1>
+            {% if month == "01"%}
+            <a href="/{{service_detail.service_name}}/{{year|int-1}}-12/item_detail"><svg
+                    xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    class="bi bi-caret-left-square-fill" viewBox="0 0 16 16">
+                    <path
+                        d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm10.5 10V4a.5.5 0 0 0-.832-.374l-4.5 4a.5.5 0 0 0 0 .748l4.5 4A.5.5 0 0 0 10.5 12z" />
+                </svg></a>
+            {% elif month|int < 11 %} <a href="/{{service_detail.service_name}}/{{year}}-0{{month|int-1}}/item_detail">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    class="bi bi-caret-left-square-fill" viewBox="0 0 16 16">
+                    <path
+                        d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm10.5 10V4a.5.5 0 0 0-.832-.374l-4.5 4a.5.5 0 0 0 0 .748l4.5 4A.5.5 0 0 0 10.5 12z" />
+                </svg></a>
+                {% else %}
+                <a href="/{{service_detail.service_name}}/{{year}}-{{month|int-1}}/item_detail"><svg
+                        xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-caret-left-square-fill" viewBox="0 0 16 16">
+                        <path
+                            d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm10.5 10V4a.5.5 0 0 0-.832-.374l-4.5 4a.5.5 0 0 0 0 .748l4.5 4A.5.5 0 0 0 10.5 12z" />
+                    </svg></a>
+                {% endif %}
+
+                {{year}}年{{month}}月
+
+                {% if month == "12"%}
+                <a href="/{{service_detail.service_name}}/{{year|int+1}}-01/item_detail"><svg
+                        xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-caret-right-square-fill" viewBox="0 0 16 16">
+                        <path
+                            d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm5.5 10a.5.5 0 0 0 .832.374l4.5-4a.5.5 0 0 0 0-.748l-4.5-4A.5.5 0 0 0 5.5 4v8z" />
+                    </svg></a>
+                {% elif month|int < 9 %} <a
+                    href="/{{service_detail.service_name}}/{{year}}-0{{month|int+1}}/item_detail"><svg
+                        xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-caret-right-square-fill" viewBox="0 0 16 16">
+                        <path
+                            d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm5.5 10a.5.5 0 0 0 .832.374l4.5-4a.5.5 0 0 0 0-.748l-4.5-4A.5.5 0 0 0 5.5 4v8z" />
+                    </svg></a>
+                    {% else %}
+                    <a href="/{{service_detail.service_name}}/{{year}}-{{month|int+1}}/item_detail"><svg
+                            xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-caret-right-square-fill" viewBox="0 0 16 16">
+                            <path
+                                d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm5.5 10a.5.5 0 0 0 .832.374l4.5-4a.5.5 0 0 0 0-.748l-4.5-4A.5.5 0 0 0 5.5 4v8z" />
+                        </svg></a>
+                    {% endif %}
+        </h1>
+
         <p>{{service_detail.current_usage}}円/{{service_detail.upper_limit}}円</p>
         {% if service_detail.upper_limit != 0 %}
         {% if service_detail.current_usage / service_detail.upper_limit < 0.8 %} <div class="progress"
@@ -28,6 +76,9 @@
 </div>
 {% endif %}
 {% endif %}
+
+
+
 </div>
 </div>
 
