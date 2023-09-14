@@ -2,29 +2,34 @@
 {% block content %}
 <nav class="navbar navbar-light bg-light">
     <div class="container-fluid">
-        <span class="navbar-brand mb-0 h1">サービス一覧</span>
+        <span class="navbar-brand mb-0 h1">商品一覧</span>
     </div>
 </nav>
 
 <div class="container">
     <table class="table table-striped">
         <thead>
-            <!--表示する内容-->
             <tr>
+                <th scope="col">購入日</th>
+                <th scope="col">商品名</th>
+                <th scope="col">値段</th>
+                <th scope="col">属性</th>
                 <th scope="col">サービス名</th>
-                <th scope="col">上限金額</th>
-                <th scope="col">上限金額変更</th>
+                <th scope="col">内容変更</th>
                 <th scope="col">削除</th>
             </tr>
         </thead>
         <tbody>
-            <!--サービスごとに内容を表示-->
-            {% for service in service_detail_list %}
+            {% for item in item_detail_list %}
             <tr>
-                <td>{{service.service_name}}</td>
-                <td>{{service.upper_limit}}</td>
-                <!--編集のアイコン-->
-                <td><a href="/{{service.service_name}}/service_edit" role="button">
+                <td>{{item.purchase_date}}</td>
+                <td>{{item.item_name}}</td>
+                <td>{{item.item_price}}</td>
+                <td>{{item.item_attribute}}</td>
+                <td>{{item.service_name}}</td>
+                <td>
+                    <!--商品の編集-->
+                    <a href="/{{item.service_name}}/item_edit/{{item.item_id}}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                             class="bi bi-pencil-square" viewBox="0 0 16 16">
                             <path
@@ -34,8 +39,9 @@
                         </svg>
                     </a>
                 </td>
-                <!--削除のアイコン-->
-                <td><a href="/{{service.service_name}}/service_delete" role="button">
+                <td>
+                    <!--商品の削除-->
+                    <a href="/{{item.service_name}}/item_delete/{{item.item_id}}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                             class="bi bi-trash3" viewBox="0 0 16 16">
                             <path
@@ -49,17 +55,4 @@
     </table>
 </div>
 
-
-<div class="container">
-    <a href="/service_register">
-        <button type="button" class="btn btn-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle"
-                viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                <path
-                    d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
-            </svg> 新規サービス登録
-        </button>
-    </a>
-</div>
 {% endblock %}
