@@ -28,6 +28,7 @@
                 <td>{{item.item_attribute}}</td>
                 <td>{{item.service_name}}</td>
                 <td>
+                    <!--商品の編集-->
                     <a href="/{{item.service_name}}/item_edit/{{item.item_id}}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                             class="bi bi-pencil-square" viewBox="0 0 16 16">
@@ -39,6 +40,7 @@
                     </a>
                 </td>
                 <td>
+                    <!--商品の削除-->
                     <a href="/{{item.service_name}}/item_delete/{{item.item_id}}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                             class="bi bi-trash3" viewBox="0 0 16 16">

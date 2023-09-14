@@ -43,11 +43,13 @@
             <label for="item_attribute" class="form-label">属性</label>
             <div class="input-group">
                 <select class="form-control" name="item_attribute" id="item_attribute">
-                    <option>CG・イラスト</option>
-                    <option>ボイス・ASMR</option>
-                    <option>動画作品</option>
-                    <option>ゲーム</option>
-                    <option>音楽作品</option>
+                    {% for item_attribute in item_attribute_list %}
+                    {% if item_attribute == objective_item.item_attribute %}
+                    <option selected>{{item_attribute}}</option>
+                    {% else %}
+                    <option>{{item_attribute}}</option>
+                    {% endif %}
+                    {% endfor %}
                 </select>
             </div>
         </div>
