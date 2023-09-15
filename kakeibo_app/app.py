@@ -641,6 +641,23 @@ def register_new_extra_item():  # 新しい商品を登録する
         extra_item_attribute = request.form.get(
             "extra_item_attribute"
         )  # 画面から送られてきた商品の属性
+        if (
+            is_there_empty_entry(
+                [
+                    purchase_date,
+                    service_name,
+                    extra_item_name,
+                    extra_item_price,
+                    extra_item_attribute,
+                ]
+            )
+            is True
+        ):
+            return render_template(
+                "extra_item_register.html",
+                error_message="全て入力してください",
+                extra_item_attribute_list=ITEM_ATTRIBUTE_LIST,
+            )
 
         # ここからDBに登録する処理
         register_body = {
@@ -741,7 +758,7 @@ def delete_extra_item(extra_item_id):  # 登録されているサービスを削
             [extra_item_id],
         )
         db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
-        return redirect(f"/extra_item_detail")  # DBからサービスを削除したら、TOP画面に戻る
+        return redirect("/extra_item_detail")  # DBからサービスを削除したら、TOP画面に戻る
 
     objective_extra_item = db.execute(
         "select * from extra_item where extra_item_id = ?",

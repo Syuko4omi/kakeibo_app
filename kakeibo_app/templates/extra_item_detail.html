@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
-<nav class="navbar navbar-light bg-light">
+<nav class="navbar">
     <div class="container-fluid">
         <span class="navbar-brand mb-0 h1">商品一覧</span>
     </div>
 </nav>
 
-<div class="jumbotron jumbotron-fluid bg-dark">
+<div class="bg-body-tertiary p-3 p-sm-5 mb-4">
     <div class="container text-white">
         <h1>節約したお金で買ったもの</h1>
 
@@ -17,7 +17,7 @@
                 {{usage_ratio_with_percent}}🤑</div>
     </div>
     {% elif 0.8 <= sum_of_total_usage / sum_of_total_upper_limit < 1 %} <div class="progress" style="height: 30px;">
-        <div class="progress-bar bg-warning" style={{text_style_usage_ratio}} role="progressbar">
+        <div class="progress-bar bg-warning text-dark" style={{text_style_usage_ratio}} role="progressbar">
             {{usage_ratio_with_percent}}🫨</div>
 </div>
 {% else %}
@@ -29,6 +29,7 @@
 {% endif %}
 </div>
 </div>
+
 
 <div class="container">
     <table class="table table-striped">

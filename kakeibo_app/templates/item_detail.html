@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
-<nav class="navbar navbar-light bg-light">
+<nav class="navbar">
     <div class="container-fluid">
         <span class="navbar-brand mb-0 h1">商品一覧</span>
     </div>
 </nav>
 
-<div class="jumbotron jumbotron-fluid bg-dark">
+<div class="bg-body-tertiary p-3 p-sm-5 mb-4">
     <div class="container text-white">
         <h1>
             {% if month == "01"%}
@@ -66,7 +66,8 @@
     </div>
     {% elif 0.8 <= service_detail.current_usage / service_detail.upper_limit < 1 %} <div class="progress"
         style="height: 30px;">
-        <div class="progress-bar bg-warning" style={{service_detail.text_style_usage_ratio}} role="progressbar">
+        <div class="progress-bar bg-warning text-dark" style={{service_detail.text_style_usage_ratio}}
+            role="progressbar">
             {{service_detail.usage_ratio_with_percent}}🫨</div>
 </div>
 {% else %}
@@ -76,9 +77,6 @@
 </div>
 {% endif %}
 {% endif %}
-
-
-
 </div>
 </div>
 
