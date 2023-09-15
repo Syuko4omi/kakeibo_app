@@ -57,7 +57,7 @@
                     {% endif %}
         </h1>
 
-        <p>{{service_detail.current_usage}}円/{{service_detail.upper_limit}}円</p>
+        <p>{{service_detail.current_usage}}円 / {{service_detail.upper_limit}}円</p>
         {% if service_detail.upper_limit != 0 %}
         {% if service_detail.current_usage / service_detail.upper_limit < 0.8 %} <div class="progress"
             style="height: 30px;">

@@ -17,15 +17,15 @@
         margin: 15px auto;
     }
 
-    body {
+    /*body {
         text-align: center;
         color: green;
-    }
+    }*/
 
-    h2 {
-        text-align: center;
-        font-family: "Verdana", sans-serif;
-        font-size: 30px;
+    .btn-primary {
+        background: #03dac5;
+        color: #000000;
+        border: 0 none;
     }
 </style>
 
@@ -64,25 +64,20 @@
         <div class="container text-white">
             <h1>使用金額合計：{{sum_of_total_usage}}円</h1>
             <h1>上限金額合計：{{sum_of_total_upper_limit}}円</h1>
-            {% if sum_of_total_usage < sum_of_total_upper_limit %} <p>これまでに{{ sum_of_total_upper_limit -
-                sum_of_total_usage }}円節約しました</p>
+            {% if sum_of_total_usage < sum_of_total_upper_limit %} <h1>これまでに{{ sum_of_total_upper_limit -
+                sum_of_total_usage }}円節約しました</h1>
                 {% else %}
-                <p>これまでに{{ sum_of_total_usage - sum_of_total_upper_limit}}円浪費しました</p>
+                <h1>これまでに{{ sum_of_total_usage - sum_of_total_upper_limit}}円浪費しました</h1>
                 {% endif %}
                 <a href="/extra_item_detail">
                     <button type="button" class="btn btn-primary mb-12" data-toggle="modal"
-                        data-target="#testModal">節約したお金を使う<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                            fill="currentColor" class="bi bi-caret-right-fill" viewBox="0 0 16 16">
-                            <path
-                                d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z" />
-                        </svg></button></a>
+                        data-target="#testModal">節約したお金を使う</button></a>
         </div>
     </div>
 
 
 
     <div class="container">
-        <!--<h2>使用金額と上限金額</h2>-->
         <div>
             <canvas id="myChart"></canvas>
         </div>
@@ -108,11 +103,13 @@
                 {
                     label: "使用金額",
                     data: total_usage,
+                    /*backgroundColor: "rgba(3, 218, 197,0.6)",*//*teal*/
                     backgroundColor: "rgba(153,205,1,0.6)",
                 },
                 {
                     label: "上限金額",
                     data: total_upper_limit,
+                    /*backgroundColor: "rgba(187, 134, 252,0.6)",*//*purple*/
                     backgroundColor: "rgba(155,153,10,0.6)",
                 },
             ],

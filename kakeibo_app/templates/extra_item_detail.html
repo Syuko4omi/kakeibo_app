@@ -10,7 +10,7 @@
     <div class="container text-white">
         <h1>節約したお金で買ったもの</h1>
 
-        <p>{{sum_of_total_usage}}円/{{sum_of_total_upper_limit}}円</p>
+        <p>{{sum_of_total_usage}}円 / {{sum_of_total_upper_limit}}円</p>
         {% if sum_of_total_upper_limit > 0 %}
         {% if sum_of_total_usage / sum_of_total_upper_limit < 0.8 %} <div class="progress" style="height: 30px;">
             <div class="progress-bar bg-success" style={{text_style_usage_ratio}} role="progressbar">
@@ -79,12 +79,8 @@
         </tbody>
     </table>
     <a href="/extra_item_register">
-        <button type="button" class="btn btn-primary mb-12" data-toggle="modal" data-target="#testModal">商品登録<svg
-                xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                class="bi bi-caret-right-fill" viewBox="0 0 16 16">
-                <path
-                    d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z" />
-            </svg></button></a>
+        <button type="button" class="btn btn-primary mb-12" data-toggle="modal"
+            data-target="#testModal">商品登録</button></a>
 </div>
 
 {% endblock %}

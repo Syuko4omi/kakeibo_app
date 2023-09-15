@@ -4,20 +4,20 @@
 <div class="bg-body-tertiary p-3 p-sm-5 mb-4">
     <div class="container">
         <h1>{{year}}年{{month}}月</h1>
-        <p>{{total_current_usage}}円/{{total_upper_limit}}円</p>
+        <p>{{total_current_usage}}円 / {{total_upper_limit}}円</p>
         {% if total_upper_limit != 0 %}
         {% if total_current_usage / total_upper_limit < 0.8 %} <div class="progress" style="height: 30px;">
             <div class="progress-bar bg-success" style={{text_style_total_usage_ratio}} role="progressbar">
-                {{total_usage_ratio_with_percent}}🤑</div>
+                {{total_usage_ratio_with_percent}}</div>
     </div>
     {% elif 0.8 <= total_current_usage / total_upper_limit < 1 %} <div class="progress" style="height: 30px;">
         <div class="progress-bar bg-warning text-dark" style={{text_style_total_usage_ratio}} role="progressbar">
-            {{total_usage_ratio_with_percent}}🫨</div>
+            {{total_usage_ratio_with_percent}}</div>
 </div>
 {% else %}
 <div class="progress" style="height: 30px;">
     <div class="progress-bar bg-danger" style={{text_style_total_usage_ratio}} role="progressbar">
-        {{total_usage_ratio_with_percent}}💸</div>
+        {{total_usage_ratio_with_percent}}</div>
 </div>
 {% endif %}
 {% endif %}
@@ -29,23 +29,25 @@
     <div class="row">
         {% for service_detail in service_detail_list %}
         <div class="col-md-4">
-            <div class="card mb-3" style="max-width: 18rem;">
-                <div class="card-header">{{service_detail.service_name}}</div>
+            <div class="card mb-3">
+                <div class=" card-header">{{service_detail.service_name}}</div>
                 <div class="card-body">
-                    <h5 class="card-title">{{service_detail.current_usage}}円/{{service_detail.upper_limit}}円</h5>
+                    <h5 class="card-title">{{service_detail.current_usage}}円 / {{service_detail.upper_limit}}円</h5>
                     <p class="card-text">
-                        {% if service_detail.current_usage / service_detail.upper_limit < 0.8 %} <div class="progress">
+                        {% if service_detail.current_usage / service_detail.upper_limit < 0.8 %} <div class="progress"
+                            style="height: 24px;">
                             <div class="progress-bar bg-success" style={{service_detail.text_style_usage_ratio}}
                                 role="progressbar">
                                 {{service_detail.usage_ratio_with_percent}}</div>
                 </div>
-                {% elif 0.8 <= service_detail.current_usage / service_detail.upper_limit < 1 %} <div class="progress">
+                {% elif 0.8 <= service_detail.current_usage / service_detail.upper_limit < 1 %} <div class="progress"
+                    style="height: 24px;">
                     <div class="progress-bar bg-warning text-dark" style={{service_detail.text_style_usage_ratio}}
                         role="progressbar">
                         {{service_detail.usage_ratio_with_percent}}</div>
             </div>
             {% else %}
-            <div class="progress">
+            <div class="progress" style="height: 24px;">
                 <div class="progress-bar bg-danger" style={{service_detail.text_style_usage_ratio}} role="progressbar">
                     {{service_detail.usage_ratio_with_percent}}</div>
             </div>
