@@ -325,7 +325,7 @@ def register_new_item():  # 新しい商品を登録する
         if is_existed_item:
             return render_template(
                 "item_register.html",
-                error_message="同じ名前の商品がこのサービスで既に購入されています",
+                error_message=f"同じ名前の商品が{service_name}で既に購入されています",
                 service_detail_list=service_detail_list,
                 item_attribute_list=ITEM_ATTRIBUTE_LIST,
             )
@@ -397,6 +397,24 @@ def edit_item(service_name, item_id):  # 商品を編集する
         item_name = request.form.get("item_name")  # 画面から送られてきた商品名
         item_price = request.form.get("item_price")  # 画面から送られてきた商品の金額
         item_attribute = request.form.get("item_attribute")  # 画面から送られてきた商品の属性
+
+        is_existed_item = db.execute(  # 既に同じ名前の商品が同じサービスで購入されているかどうかを確認
+            "select service_name, item_name from item where service_name = ? and item_name = ?",
+            [
+                service_name,
+                item_name,
+            ],
+        ).fetchall()
+
+        # 同名の商品が変更先のサービスで購入されている場合のエラーキャッチ（元と変更がない場合はスルー）
+        if is_existed_item and service_name != objective_item["service_name"]:
+            return render_template(
+                "item_edit.html",
+                error_message=f"同じ名前の商品が{service_name}で既に購入されています",
+                objective_item=objective_item,
+                service_detail_list=service_detail_list,
+                item_attribute_list=ITEM_ATTRIBUTE_LIST,
+            )
 
         # 入力が空欄の場合のエラーキャッチ
         if (
