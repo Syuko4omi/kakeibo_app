@@ -399,15 +399,12 @@ def edit_item(service_name, item_id):  # 商品を編集する
         item_attribute = request.form.get("item_attribute")  # 画面から送られてきた商品の属性
 
         is_existed_item = db.execute(  # 既に同じ名前の商品が同じサービスで購入されているかどうかを確認
-            "select service_name, item_name from item where service_name = ? and item_name = ?",
-            [
-                service_name,
-                item_name,
-            ],
-        ).fetchall()
+            "select service_name, item_name from item where service_name = ? and item_name = ? and item_id != ?",
+            [service_name, item_name, item_id],
+        ).fetchall()  # そのままだと自分自身がヒットしてしまうので、自分以外のitem_idを持つものから探す
 
-        # 同名の商品が変更先のサービスで購入されている場合のエラーキャッチ（元と変更がない場合はスルー）
-        if is_existed_item and service_name != objective_item["service_name"]:
+        # 同名の商品が変更先のサービスで購入されている場合のエラーキャッチ
+        if is_existed_item:
             return render_template(
                 "item_edit.html",
                 error_message=f"同じ名前の商品が{service_name}で既に購入されています",
