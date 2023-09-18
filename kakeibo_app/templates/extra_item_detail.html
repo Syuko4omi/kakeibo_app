@@ -14,16 +14,16 @@
         {% if sum_of_total_upper_limit > 0 %}
         {% if sum_of_total_usage / sum_of_total_upper_limit < 0.8 %} <div class="progress" style="height: 30px;">
             <div class="progress-bar bg-success" style={{text_style_usage_ratio}} role="progressbar">
-                {{usage_ratio_with_percent}}🤑</div>
+                {{usage_ratio_with_percent}}</div>
     </div>
     {% elif 0.8 <= sum_of_total_usage / sum_of_total_upper_limit < 1 %} <div class="progress" style="height: 30px;">
         <div class="progress-bar bg-warning text-dark" style={{text_style_usage_ratio}} role="progressbar">
-            {{usage_ratio_with_percent}}🫨</div>
+            {{usage_ratio_with_percent}}</div>
 </div>
 {% else %}
 <div class="progress" style="height: 30px;">
     <div class="progress-bar bg-danger" style={{text_style_usage_ratio}} role="progressbar">
-        {{usage_ratio_with_percent}}💸</div>
+        {{usage_ratio_with_percent}}</div>
 </div>
 {% endif %}
 {% endif %}

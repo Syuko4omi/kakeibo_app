@@ -2,7 +2,12 @@ from flask import Flask, render_template, request, redirect, g
 import sqlite3
 
 from config import DATABASE, ITEM_ATTRIBUTE_LIST
-from util import get_current_yyyymm, is_there_empty_entry, get_total_usage_info
+from util import (
+    get_current_yyyymm,
+    is_there_empty_entry,
+    get_total_usage_info,
+    add_usage_info_to_service_detail,
+)
 
 app = Flask(__name__)
 
@@ -28,9 +33,7 @@ def get_db():
 
 @app.route("/")
 def top():  # トップ画面を表示
-    # 年と月を取得
-    yyyymm = get_current_yyyymm()
-
+    yyyymm = get_current_yyyymm()  # 年と月を取得
     db = get_db()  # 接続を確立
     service_detail_list = db.execute(  # 特定の年月のサービスを取得する
         "select * from service where year_month = ?", [yyyymm]
@@ -39,36 +42,23 @@ def top():  # トップ画面を表示
     if service_detail_list != []:  # テーブルにサービスが登録されていた場合の処理
         item_detail_list = db.execute(
             "select * from item where purchase_date like ?", [yyyymm + "%"]
-        ).fetchall()  # 該当の月に買った商品
+        ).fetchall()  # 該当の月に買った商品を全て抜き出す
         expense_for_each_service = {  # それぞれのサービスに対する出費が入る
             service_detail["service_name"]: 0 for service_detail in service_detail_list
         }
-        for item in item_detail_list:
+        for item in item_detail_list:  # 上限金額が設定されたサービスで買った商品のみ使用金額に加算する
             if item["service_name"] in expense_for_each_service:
                 expense_for_each_service[item["service_name"]] += item["item_price"]
 
         service_detail_list_with_each_data = []
+        # sqlite3.Rowオブジェクトをもとに、上限の何割使ったのかなどを計算した情報を格納した辞書型をリストに加える
         for service_detail in service_detail_list:
-            service_name = service_detail["service_name"]
-            upper_limit = service_detail["upper_limit"]
-            current_usage = expense_for_each_service[service_name]
-            usage_ratio = round((current_usage * 100 / upper_limit), 1)
-            text_style_usage_ratio = f"width:{usage_ratio}%"
-            usage_ratio_with_percent = f"{usage_ratio}%"
-
-            service_detail_list_with_each_data.append(
-                {
-                    "service_name": service_name,
-                    "current_usage": current_usage,
-                    "upper_limit": upper_limit,
-                    "text_style_usage_ratio": text_style_usage_ratio,
-                    "usage_ratio_with_percent": usage_ratio_with_percent,
-                }
+            service_detail_dict = add_usage_info_to_service_detail(
+                service_detail, expense_for_each_service[service_detail["service_name"]]
             )
+            service_detail_list_with_each_data.append(service_detail_dict)
 
-        total_current_usage = sum(
-            [expense for expense in expense_for_each_service.values()]
-        )
+        total_current_usage = sum(expense_for_each_service.values())
         total_upper_limit = sum(
             [service_detail["upper_limit"] for service_detail in service_detail_list]
         )
@@ -84,7 +74,6 @@ def top():  # トップ画面を表示
             total_current_usage=total_current_usage,
             text_style_total_usage_ratio=text_style_total_usage_ratio,
             total_usage_ratio_with_percent=total_usage_ratio_with_percent,
-            # service_detail_list=service_detail_list,
             service_detail_list=service_detail_list_with_each_data,
         )
     else:  # 今月分のサービスが登録されていなかった場合
@@ -99,50 +88,35 @@ def top():  # トップ画面を表示
             )
             service_detail_list_with_each_data = []
             for service_detail in service_detail_list:  # 上限は前の時と据え置き
-                service_name = service_detail["service_name"]
-                upper_limit = service_detail["upper_limit"]
-                current_usage = 0
-                usage_ratio = round((current_usage * 100 / upper_limit), 1)
-                text_style_usage_ratio = f"width:{usage_ratio}%"
-                usage_ratio_with_percent = f"{usage_ratio}%"
-
-                service_detail_list_with_each_data.append(
-                    {
-                        "service_name": service_name,
-                        "current_usage": current_usage,
-                        "upper_limit": upper_limit,
-                        "text_style_usage_ratio": text_style_usage_ratio,
-                        "usage_ratio_with_percent": usage_ratio_with_percent,
-                    }
+                service_detail_dict = add_usage_info_to_service_detail(
+                    service_detail=service_detail, current_usage=0
                 )
+                service_detail_list_with_each_data.append(service_detail_dict)
 
                 db.execute(  # dbにデータを登録
                     "insert into service (year_month, service_name, upper_limit) values (?, ?, ?)",
-                    [yyyymm, service_name, upper_limit],
+                    [
+                        yyyymm,
+                        service_detail_dict["service_name"],
+                        service_detail_dict["upper_limit"],
+                    ],
                 )
                 db.commit()
-
-            total_current_usage = 0
             total_upper_limit = sum(
                 [
                     service_detail["upper_limit"]
                     for service_detail in service_detail_list_with_each_data
                 ]
             )
-            total_usage_ratio = round(
-                (total_current_usage * 100 / total_upper_limit), 1
-            )
-            text_style_total_usage_ratio = f"width:{total_usage_ratio}%"
-            total_usage_ratio_with_percent = f"{total_usage_ratio}%"
 
             return render_template(
                 "index.html",
                 year=yyyymm[:4],
                 month=yyyymm[5:],
                 total_upper_limit=total_upper_limit,
-                total_current_usage=total_current_usage,
-                text_style_total_usage_ratio=text_style_total_usage_ratio,
-                total_usage_ratio_with_percent=total_usage_ratio_with_percent,
+                total_current_usage=0,
+                text_style_total_usage_ratio=f"width:{0}%",
+                total_usage_ratio_with_percent=f"{0}%",
                 service_detail_list=service_detail_list_with_each_data,
             )
         else:  # 初めてサービスを使う場合
@@ -162,7 +136,6 @@ def top():  # トップ画面を表示
 @app.route("/service_detail")
 def show_registered_services():  # 登録したサービスの一覧を表示
     yyyymm = get_current_yyyymm()
-
     db = get_db()  # 接続を確立
     service_detail_list = db.execute(  # 登録したサービス一覧
         "select * from service where year_month = ?", [yyyymm]
@@ -275,32 +248,22 @@ def delete_service(service_name):  # 登録されているサービスを削除�
 @app.route("/<service_name>/<yyyymm>/item_detail")
 def show_registered_items(service_name, yyyymm):  # 登録した商品の一覧を表示
     db = get_db()  # 接続を確立
-    item_detail_list = db.execute(  # 特定のサービスについて、今月購入した商品を取得する
+    item_detail_list = db.execute(  # 特定のサービスについて、ある月に購入した商品全てを取得する
         "select * from item where purchase_date like ? and service_name = ?",
         [
             yyyymm + "%",
             service_name,
         ],
     ).fetchall()
-    service_data = db.execute(  # 削除画面を表示するために対象のサービスの内容を取得
+    service_data = db.execute(  # 対象のサービスの内容を取得
         "select service_name, upper_limit from service where service_name = ? and year_month = ?",
         [service_name, yyyymm],
     ).fetchone()
 
-    if service_data is not None:
-        current_usage = sum([item["item_price"] for item in item_detail_list])
-        service_name = service_data["service_name"]
-        upper_limit = service_data["upper_limit"]
-        usage_ratio = round((current_usage * 100 / upper_limit), 1)
-        text_style_usage_ratio = f"width:{usage_ratio}%"
-        usage_ratio_with_percent = f"{usage_ratio}%"
-        service_detail = {
-            "service_name": service_name,
-            "current_usage": current_usage,
-            "upper_limit": upper_limit,
-            "text_style_usage_ratio": text_style_usage_ratio,
-            "usage_ratio_with_percent": usage_ratio_with_percent,
-        }
+    if service_data is not None:  # サービスが登録されていた場合、使用金額が上限金額のどれくらいなのかを計算する
+        service_detail = add_usage_info_to_service_detail(
+            service_data, sum([item["item_price"] for item in item_detail_list])
+        )
 
         return render_template(
             "item_detail.html",
@@ -309,19 +272,13 @@ def show_registered_items(service_name, yyyymm):  # 登録した商品の一覧�
             month=yyyymm[5:],
             service_detail=service_detail,
         )
-    else:
-        current_usage = sum([item["item_price"] for item in item_detail_list])
-        service_name = service_name
-        upper_limit = 0
-        usage_ratio = 0
-        text_style_usage_ratio = "width:0.0%"
-        usage_ratio_with_percent = "-"
+    else:  # サービスが登録されていない場合、商品のみを表示する
         service_detail = {
             "service_name": service_name,
-            "current_usage": current_usage,
-            "upper_limit": upper_limit,
-            "text_style_usage_ratio": text_style_usage_ratio,
-            "usage_ratio_with_percent": usage_ratio_with_percent,
+            "current_usage": sum([item["item_price"] for item in item_detail_list]),
+            "upper_limit": 0,
+            "text_style_usage_ratio": "width:0.0%",
+            "usage_ratio_with_percent": "-",
         }
 
         return render_template(
@@ -487,11 +444,11 @@ def edit_item(service_name, item_id):  # 商品を編集する
 
 
 @app.route("/<service_name>/item_delete/<item_id>", methods=["GET", "POST"])
-def delete_item(service_name, item_id):  # 登録されているサービスを削除する
+def delete_item(service_name, item_id):  # 登録されている商品を削除する
     db = get_db()
 
     if request.method == "POST":
-        # DBからサービスを削除する
+        # DBから商品を削除する
         purchase_date = db.execute(
             "select purchase_date from item where item_id = ?", [item_id]
         ).fetchone()["purchase_date"]
@@ -502,7 +459,7 @@ def delete_item(service_name, item_id):  # 登録されているサービスを�
         db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
         return redirect(
             f"/{service_name}/{purchase_date[:7]}/item_detail"
-        )  # DBからサービスを削除したら、TOP画面に戻る
+        )  # DBから商品を削除したら、TOP画面に戻る
 
     objective_item = db.execute(
         "select * from item where item_id = ?",
@@ -534,7 +491,7 @@ def show_graph():
     )
     recorded_year_month_list.sort()
 
-    total_upper_limit_and_usage_for_each_month = {}
+    total_upper_limit_and_usage_for_each_month = {}  # 各月の上限金額と使用金額を格納する
     for year_month in recorded_year_month_list:
         total_upper_limit_and_usage_for_each_month[year_month] = {
             "total_upper_limit": 0,
@@ -601,6 +558,7 @@ def show_registered_extra_items():  # 登録した商品の一覧を表示
     service_detail_list = db.execute(
         "select * from service",
     ).fetchall()
+    # 毎月登録している商品とサービスについて、使用額と上限額の合計を出す
     item_detail_list = db.execute("select * from item").fetchall()
     (
         _,
@@ -611,7 +569,7 @@ def show_registered_extra_items():  # 登録した商品の一覧を表示
         _,
     ) = get_total_usage_info(service_detail_list, item_detail_list)
 
-    extra_money = sum_of_total_upper_limit - sum_of_total_usage
+    extra_money = sum_of_total_upper_limit - sum_of_total_usage  # 節約した金額
     extra_item_detail_list = db.execute("select * from extra_item").fetchall()
     extra_item_usage = sum(
         [extra_item["extra_item_price"] for extra_item in extra_item_detail_list]
@@ -694,7 +652,7 @@ def edit_extra_item(extra_item_id):  # 商品を編集する
         "select * from extra_item where extra_item_id = ?", [extra_item_id]
     ).fetchone()
 
-    if request.method == "POST":  # 登録ボタンが押された場合の処理
+    if request.method == "POST":  # 編集ボタンが押された場合の処理
         # request.form.getで得られるのは全部str型
         purchase_date = request.form.get("purchase_date")  # 画面から送られてきた購入日 2023-09-01とか
         service_name = request.form.get("service_name")  # 画面から送られてきたサービス名

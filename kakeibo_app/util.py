@@ -1,4 +1,5 @@
 import datetime
+import sqlite3
 
 
 def get_current_yyyymm() -> str:  # 年と月を取得する
@@ -9,14 +10,17 @@ def get_current_yyyymm() -> str:  # 年と月を取得する
     return year + "-" + month
 
 
-def is_there_empty_entry(entry_list) -> bool:
+def is_there_empty_entry(entry_list: list[str]) -> bool:
     for entry in entry_list:
         if entry == "":
             return True
     return False
 
 
-def get_total_usage_info(service_detail_list, item_detail_list):
+def get_total_usage_info(
+    service_detail_list: list[sqlite3.Row], item_detail_list: list[sqlite3.Row]
+):
+    # 毎月登録している商品とサービスについて、使用額と上限額の合計を出す
     # いくら節約できたかを可視化したいので、サービスの上限金額が記録されている月だけ選ぶ
     recorded_year_month_list = list(
         set([service_detail["year_month"] for service_detail in service_detail_list])
@@ -65,3 +69,20 @@ def get_total_usage_info(service_detail_list, item_detail_list):
         sum_of_total_usage,
         usage_ratio,
     )
+
+
+def add_usage_info_to_service_detail(service_detail: sqlite3.Row, current_usage: int):
+    # ある月のサービスの上限金額と、そのサービスで買った商品の合計金額を元に、使用率を計算する
+    service_name = service_detail["service_name"]
+    upper_limit = service_detail["upper_limit"]
+    usage_ratio = round((current_usage * 100 / upper_limit), 1)
+    text_style_usage_ratio = f"width:{usage_ratio}%"
+    usage_ratio_with_percent = f"{usage_ratio}%"
+
+    return {
+        "service_name": service_name,
+        "current_usage": current_usage,
+        "upper_limit": upper_limit,
+        "text_style_usage_ratio": text_style_usage_ratio,
+        "usage_ratio_with_percent": usage_ratio_with_percent,
+    }
