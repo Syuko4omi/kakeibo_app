@@ -744,7 +744,7 @@ def delete_extra_item(extra_item_id):  # 登録されているサービスを削
     )
 
 
-con = sqlite3.connect("kakeibo.db")
+con = sqlite3.connect(DATABASE)
 cur = con.cursor()
 cur.execute(
     "create table if not exists service(service_id integer primary key autoincrement, year_month text not null, service_name text not null, upper_limit integer not null)"
