@@ -10,7 +10,7 @@
     <div class="container text-white">
         <h1>使用金額合計：{{sum_of_total_usage}}円</h1>
         <h1>上限金額合計：{{sum_of_total_upper_limit}}円</h1>
-        {% if sum_of_total_usage < sum_of_total_upper_limit %} <h1>これまでに{{ sum_of_total_upper_limit -
+        {% if sum_of_total_usage <= sum_of_total_upper_limit %} <h1>これまでに{{ sum_of_total_upper_limit -
             sum_of_total_usage }}円節約しました</h1>
             {% else %}
             <h1>これまでに{{ sum_of_total_usage - sum_of_total_upper_limit}}円浪費しました</h1>

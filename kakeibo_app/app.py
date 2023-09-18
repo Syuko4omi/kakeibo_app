@@ -78,7 +78,7 @@ def top():  # トップ画面を表示
         )
     else:  # 今月分のサービスが登録されていなかった場合
         is_service_exist = db.execute("select * from service").fetchone()
-        if is_service_exist != []:  # 以前にサービスが登録されていた場合
+        if is_service_exist != None:  # 以前にサービスが登録されていた場合
             newest_service = db.execute(
                 "select * from service where service_id = (select max(service_id) from service)"
             ).fetchone()
@@ -147,12 +147,15 @@ def show_registered_services():  # 登録したサービスの一覧を表示
 
 @app.route("/service_register", methods=["GET", "POST"])
 def register_new_service(error_message=""):  # 新しいサービスを登録する
+    db = get_db()
+    is_any_service_exists = db.execute(  # 既に同じ名前のサービスが登録されているかどうかを確認
+        "select * from service"
+    ).fetchone()
     if request.method == "POST":  # 登録ボタンが押された場合の処理
         # request.form.getで得られるのは全部str型
         service_name = request.form.get("service_name")  # 画面から送られてきたサービス名
         upper_limit = request.form.get("upper_limit")  # 画面から送られてきたサービスの使用上限金額
         yyyymm = get_current_yyyymm()
-        db = get_db()
         is_existed_service = db.execute(  # 既に同じ名前のサービスが登録されているかどうかを確認
             "select service_name from service where service_name = ? and year_month = ?",
             [service_name, yyyymm],
@@ -186,6 +189,8 @@ def register_new_service(error_message=""):  # 新しいサービスを登録す
         db.execute(statement, [value for value in register_body.values()])
         db.commit()  # BEGINは暗黙的に行われるので、変更はcommitするだけで良い
         return redirect("/service_detail")  # DBに新たなサービスを入れたら、TOP画面に戻る
+    if is_any_service_exists is None:
+        error_message = "サービスが登録されていません。まずは購入したサービスと、使用する上限金額を登録してください。"
     return render_template("service_register.html", error_message=error_message)
 
 
@@ -298,10 +303,7 @@ def register_new_item():  # 新しい商品を登録する
         "select * from service where year_month = ?", [yyyymm]
     ).fetchall()
     if service_detail_list == []:
-        return render_template(
-            "service_register.html",
-            error_message="サービスが登録されていません。まずは購入したサービスと、使用する上限金額を登録してください。",
-        )
+        return redirect("/service_register")
 
     if request.method == "POST":  # 登録ボタンが押された場合の処理
         # request.form.getで得られるのは全部str型
@@ -524,22 +526,23 @@ def show_graph():
     ]
 
     # グラフの見栄えを良くするために、最初に記録された月より一ヶ月前にデータを追加する
-    first_recorded_year_month = recorded_year_month_list[0]
-    if first_recorded_year_month[5:] == "01":
-        previous_year = str(int(first_recorded_year_month[:4]) - 1)
-        previous_month = "12"
-        recorded_year_month_list = [
-            previous_year + "-" + previous_month
-        ] + recorded_year_month_list
-        total_upper_limit = [0] + total_upper_limit
-        total_usage = [0] + total_usage
-    else:
-        previous_month = str(int(first_recorded_year_month[5:]) - 1).zfill(2)
-        recorded_year_month_list = [
-            first_recorded_year_month[:4] + "-" + previous_month
-        ] + recorded_year_month_list
-        total_upper_limit = [0] + total_upper_limit
-        total_usage = [0] + total_usage
+    if recorded_year_month_list:  # 過去の記録がある場合
+        first_recorded_year_month = recorded_year_month_list[0]
+        if first_recorded_year_month[5:] == "01":
+            previous_year = str(int(first_recorded_year_month[:4]) - 1)
+            previous_month = "12"
+            recorded_year_month_list = [
+                previous_year + "-" + previous_month
+            ] + recorded_year_month_list
+            total_upper_limit = [0] + total_upper_limit
+            total_usage = [0] + total_usage
+        else:
+            previous_month = str(int(first_recorded_year_month[5:]) - 1).zfill(2)
+            recorded_year_month_list = [
+                first_recorded_year_month[:4] + "-" + previous_month
+            ] + recorded_year_month_list
+            total_upper_limit = [0] + total_upper_limit
+            total_usage = [0] + total_usage
 
     return render_template(
         "line_graph.html",
@@ -560,30 +563,40 @@ def show_registered_extra_items():  # 登録した商品の一覧を表示
     ).fetchall()
     # 毎月登録している商品とサービスについて、使用額と上限額の合計を出す
     item_detail_list = db.execute("select * from item").fetchall()
-    (
-        _,
-        _,
-        _,
-        sum_of_total_upper_limit,
-        sum_of_total_usage,
-        _,
-    ) = get_total_usage_info(service_detail_list, item_detail_list)
+    if item_detail_list:
+        (
+            _,
+            _,
+            _,
+            sum_of_total_upper_limit,
+            sum_of_total_usage,
+            _,
+        ) = get_total_usage_info(service_detail_list, item_detail_list)
 
-    extra_money = sum_of_total_upper_limit - sum_of_total_usage  # 節約した金額
-    extra_item_detail_list = db.execute("select * from extra_item").fetchall()
-    extra_item_usage = sum(
-        [extra_item["extra_item_price"] for extra_item in extra_item_detail_list]
-    )
-    extra_usage_ratio = round((extra_item_usage * 100) / extra_money, 1)
+        extra_money = sum_of_total_upper_limit - sum_of_total_usage  # 節約した金額
+        extra_item_detail_list = db.execute("select * from extra_item").fetchall()
+        extra_item_usage = sum(
+            [extra_item["extra_item_price"] for extra_item in extra_item_detail_list]
+        )
+        extra_usage_ratio = round((extra_item_usage * 100) / extra_money, 1)
 
-    return render_template(
-        "extra_item_detail.html",
-        extra_item_detail_list=extra_item_detail_list,
-        sum_of_total_upper_limit=extra_money,
-        sum_of_total_usage=extra_item_usage,
-        text_style_usage_ratio=f"width:{extra_usage_ratio}%",
-        usage_ratio_with_percent=f"{extra_usage_ratio}%",
-    )
+        return render_template(
+            "extra_item_detail.html",
+            extra_item_detail_list=extra_item_detail_list,
+            sum_of_total_upper_limit=extra_money,
+            sum_of_total_usage=extra_item_usage,
+            text_style_usage_ratio=f"width:{extra_usage_ratio}%",
+            usage_ratio_with_percent=f"{extra_usage_ratio}%",
+        )
+    else:
+        return render_template(
+            "extra_item_detail.html",
+            extra_item_detail_list=[],
+            sum_of_total_upper_limit=0,
+            sum_of_total_usage=0,
+            text_style_usage_ratio=f"width:{0}%",
+            usage_ratio_with_percent=f"-",
+        )
 
 
 @app.route("/extra_item_register", methods=["GET", "POST"])
@@ -731,4 +744,16 @@ def delete_extra_item(extra_item_id):  # 登録されているサービスを削
     )
 
 
+con = sqlite3.connect("kakeibo.db")
+cur = con.cursor()
+cur.execute(
+    "create table if not exists service(service_id integer primary key autoincrement, year_month text not null, service_name text not null, upper_limit integer not null)"
+)
+cur.execute(
+    "create table if not exists item(item_id integer primary key autoincrement, purchase_date text not null, service_name text not null, item_name text not null, item_price integer not null, item_attribute text not null)"
+)
+cur.execute(
+    "create table if not exists extra_item(extra_item_id integer primary key autoincrement, purchase_date text not null, service_name text not null, extra_item_name text not null, extra_item_price integer not null, extra_item_attribute text not null)"
+)
+con.close()
 app.run(debug=True)  # debug=Trueでリロードすればコードの変更が反映される
